@@ -78,8 +78,16 @@ Locked (recorded in `memory/business/DECISIONS.md`):
 - **No Jira / no issue tracker for now**, may adopt later; branches use `<type>/<short-desc>`. — D-014
 - **Two-track memory + auto decision capture.** — D-015
 - **Docs = code-level READMEs** (no Confluence). — D-016
+- **`develop` integration-branch model.** — D-027
+- **UI stack = Tailwind + Radix UI + shadcn-style local kit.** — D-028
+- **Frontend build = Vite + React + TypeScript strict + React Router + TanStack Query.** — D-029
+- **Test stack = Vitest/RTL + DynamoDB Local/LocalStack + Playwright + k6.** — D-030
+- **DynamoDB multi-table at launch; SQL migration path open per service.** — D-031
+- **Summarization/extraction = Claude API behind provider interface.** — D-032
+- **API style = REST + `@heediq/shared` Zod schemas.** — D-033
+- **API runtime = Hono on single Lambda.** — D-034
+- **Polyrepo, 7 repos** (workspace, shared, web, api, worker-transcription, worker-summarization, infra). — D-035
 
-Still open (proposed, awaiting a lock):
-- **`develop` integration-branch model** vs `main` + feature branches (proposed in `02-git-and-commits.md`).
-- **UI base = Tailwind + Radix + shadcn/ui-style local kit** (proposed in `03-ui-kit.md`).
-- **Test stack = Vitest/RTL + DynamoDB Local/LocalStack + Playwright + k6** (proposed in `05-testing.md`).
+Still open (not yet locked):
+- **Exact pricing/packaging numbers** — principle locked D-011/D-019; numbers need revisiting against post-D-004 cost basis.
+- **SAML/OIDC for enterprise IdPs** — deferred per D-020.

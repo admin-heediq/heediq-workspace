@@ -228,17 +228,80 @@ Confluence BD/TDD/TP/TRM). See `rules/06-documentation.md`.
 
 ---
 
+## Stack & Repos
+
+### D-027 · `develop` integration-branch model (2026-06-16) — Locked
+**Area:** Process
+**Decision:** `develop` is the integration branch. All feature/fix/chore branches cut from `develop` and merge back via PR. Direct commits to `develop`, `main`, or `master` are not allowed. `heediq-workspace` is exempt — memory/plans commit straight to its default branch.
+**Why:** Trunk-based integration with short-lived feature branches; keeps main always releasable.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `rules/02-git-and-commits.md`
+
+### D-028 · UI component stack (2026-06-16) — Locked
+**Area:** Architecture / Design
+**Decision:** UI built on Tailwind CSS (styling), Radix UI headless primitives (accessibility/keyboard/ARIA for complex components), and a shadcn/ui-style local component kit (templates copied into-repo and owned, not a black-box dependency).
+**Why:** Radix solves accessibility correctly for dialogs, dropdowns, tooltips etc.; Tailwind enforces token-based styling per D-008; shadcn pattern means no vendor lock-in — every component line is auditable.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `rules/03-ui-kit.md`
+
+### D-029 · Frontend build stack (2026-06-16) — Locked
+**Area:** Architecture
+**Decision:** Vite + React + TypeScript strict for the PWA frontend. React Router for client-side routing. TanStack Query for all server state (loading/error/cache). Lucide React for icons. class-variance-authority (CVA) for component variant system.
+**Why:** Vite is the standard fast build tool for React PWAs; TanStack Query gives consistent loading/error/refetch behavior app-wide (required by rules/04); CVA enables the variant × size × tone system from rules/03 without prop sprawl.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `heediq-web/` (once scaffolded)
+
+### D-030 · Test stack (2026-06-16) — Locked
+**Area:** Architecture
+**Decision:** Vitest + React Testing Library (unit/component); Vitest + DynamoDB Local + LocalStack (integration, real services not mocks); Playwright (E2E browser); k6 (performance/load).
+**Why:** Vitest is Vite-native and fast; real DynamoDB Local/LocalStack for integration avoids mock-vs-prod divergence (a known risk per rules/05); Playwright for critical journeys; k6 for transcription throughput and search surfaces.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `rules/05-testing.md`
+
+### D-031 · DynamoDB multi-table design (2026-06-16) — Locked
+**Area:** Architecture
+**Decision:** Multi-table DynamoDB at launch — one table per service/entity domain. Migration of individual service data to Aurora Serverless v2 or RDS is explicitly kept open for when relational access patterns demand it.
+**Why:** Multi-table is simpler to reason about before product shape is settled; single-table requires access pattern certainty upfront that's hard to achieve at MVP. Consistent with D-007 (DynamoDB-only at launch) while keeping the migration path open.
+**Supersedes:** — **Superseded by:** —
+**Related code:** —
+
+### D-032 · Summarization/extraction model (2026-06-16) — Locked
+**Area:** Architecture / Product
+**Decision:** Claude API (Anthropic) as the initial LLM for transcript → structured extraction (requirements, decisions, open questions, summary). Implemented behind a provider interface so the model/vendor can be swapped without rewriting the worker.
+**Why:** Claude has strong structured extraction from long-form text; provider abstraction future-proofs against model changes, cost optimization, or multi-provider routing. Closes the open item flagged in previous sessions.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `heediq-worker-summarization/` (once scaffolded)
+
+### D-033 · REST as API style (2026-06-16) — Locked
+**Area:** Architecture
+**Decision:** REST over HTTP (JSON) for all frontend ↔ backend communication. Shared contract enforced via `@heediq/shared` — Zod schemas + derived TypeScript types, published as a private package and consumed by all repos.
+**Why:** Natural fit for polyrepo (shared types package is necessary regardless); API Gateway HTTP API integrates natively; no TypeScript-only coupling that tRPC would impose; keeps the API surface externally consumable if needed later. tRPC rejected for polyrepo — its main benefit (automatic type sharing) requires monorepo.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `heediq-api/`, `heediq-shared/`
+
+### D-034 · API service runtime — Hono on Lambda (2026-06-16) — Locked
+**Area:** Architecture / Infra
+**Decision:** All REST API endpoints served by a single Lambda function running the Hono web framework. One deployment unit covers all domains (auth, orgs, recordings, billing) until a service shows clear reason to split (not expected before ~10k MAU).
+**Why:** Hono is lightweight (~14kb), TypeScript-native, designed for Lambda + edge runtimes; single Lambda = one deployment, one log group, trivial local dev; same serverless cost model as individual Lambdas with far lower operational burden at <1000 MAU. Always-on containers (Fargate) rejected — $15–30/mo floor at zero traffic.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `heediq-api/`
+
+### D-035 · Polyrepo structure — 7 repos (2026-06-16) — Locked
+**Area:** Architecture / Process
+**Decision:** Seven repos under the `admin-heediq` GitHub org:
+- `heediq-workspace` — rules, memory, plans (exists)
+- `heediq-shared` — `@heediq/shared`: Zod schemas + TypeScript types, private GitHub Package
+- `heediq-web` — Vite + React PWA
+- `heediq-api` — Hono on Lambda (all REST endpoints)
+- `heediq-worker-transcription` — Python Fargate (faster-whisper, per D-004/D-005)
+- `heediq-worker-summarization` — Node Lambda (Claude API extraction, per D-032)
+- `heediq-infra` — AWS CDK (all stacks, all envs per D-003)
+**Why:** Microservice-level granularity — workers split because they have different runtimes (Python vs Node) and scaling/cost profiles; shared types in own package consumed across repos; infra separated from application code. Not feature-level (too many repos) and not monorepo (polyrepo locked).
+**Supersedes:** — **Superseded by:** —
+**Related code:** github.com/admin-heediq/
+
+---
+
 ## Open / proposed (not yet locked)
-- **`develop` integration-branch model** — proposed in `rules/02-git-and-commits.md`; confirm or
-  use `main` + feature branches while solo.
-- **UI base = Tailwind + Radix + shadcn/ui-style local kit** — proposed in `rules/03-ui-kit.md`.
-- **Test stack = Vitest/RTL + DynamoDB Local/LocalStack + Playwright + k6** — proposed in
-  `rules/05-testing.md`.
-- **Exact pricing/packaging** — principle locked at D-011/D-019; revisit numbers against the
-  post-D-004 cost basis.
-- **Extraction/summarization model** — which LLM turns a transcript into structured
-  requirements/user-stories/decisions/open-questions was only ever a brainstorm-stage suggestion
-  (Claude API with structured JSON output) in the original concept chat. It was never re-confirmed
-  once the architecture was actually locked — needs an explicit decision before this part is built.
-- **SAML/OIDC for enterprise IdPs** — explicitly deferred (D-020); revisit once an enterprise deal
-  needs it. Auth should be designed so it's addable later.
+- **Exact pricing/packaging** — principle locked at D-011/D-019; revisit numbers against the post-D-004 cost basis.
+- **SAML/OIDC for enterprise IdPs** — explicitly deferred (D-020); revisit once an enterprise deal needs it.
