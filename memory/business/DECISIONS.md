@@ -33,6 +33,7 @@ S3, SQS, EventBridge, Cognito, CloudFront, Route 53, Secrets Manager, CloudWatch
 registry — build the image once, promote across environments. Branch-based deployment with a
 manual approval gate before production.
 **Related:** `memory/business/architecture.md`
+**Superseded by:** D-036
 
 ### D-004 · Self-hosted faster-whisper on Fargate Spot — Locked (2026-06-11)
 **Area:** Infra / Cost
@@ -228,6 +229,41 @@ Confluence BD/TDD/TP/TRM). See `rules/06-documentation.md`.
 
 ---
 
+## Infrastructure Access & Naming
+
+### D-036 · 5-account AWS structure + SSO + OIDC (2026-06-16) — Locked
+**Area:** Infra
+**Decision:** Five AWS accounts under one AWS Organization:
+- **Management** — org root, IAM Identity Center (SSO), consolidated billing. No workloads run here.
+- **Shared services** — ECR (all container images), and future cross-environment shared infrastructure. OIDC trust for CI image push.
+- **Dev / Staging / Prod** — isolated workload accounts (DynamoDB, Lambda, S3, SQS, Cognito, etc. each in their own account).
+
+Human access via IAM Identity Center (SSO): one login URL, permission sets defined centrally (e.g. `AdministratorAccess`, `DeveloperAccess`), users assume roles per account. No IAM users or long-lived access keys.
+
+Machine access (GitHub Actions) via OIDC: a `GitHubActionsDeployRole` IAM role in each account (workload + shared-services) with branch-scoped trust. No stored AWS credentials in GitHub Secrets — only role ARNs in workflow files. Container images are pushed to ECR in the shared-services account and promoted (by image tag) into dev → staging → prod.
+**Why:** Account boundary is the blast-radius boundary; SSO eliminates credential sprawl; OIDC eliminates long-lived machine credentials. Shared-services account gives ECR a neutral home and room to grow into a platform layer without polluting workload accounts. Follows AWS Landing Zone best practice.
+**Supersedes:** D-003
+**Superseded by:** —
+**Related code:** `heediq-infra/`
+
+### D-037 · Resource naming — no environment prefix (2026-06-16) — Locked
+**Area:** Infra
+**Decision:** All AWS resources named `heediq-{entity}` with no environment prefix — e.g. `heediq-recordings`, `heediq-audio-uploads`, `heediq-transcription`. The account boundary is the environment boundary; the same name in different accounts refers to fully isolated resources. CDK stack names follow `Heediq{Service}Stack`. IAM policies use `heediq-*` wildcard to cover all resources in a given account.
+**Why:** Environment prefix is redundant and noisy when accounts are isolated. Cleaner names, simpler CDK code, easier IAM policies.
+**Supersedes:** — (replaces the `heediq-{env}-{entity}` pattern proposed pre-D-036)
+**Superseded by:** —
+**Related code:** `heediq-infra/`
+
+### D-038 · SSM + secrets path convention (2026-06-16) — Locked
+**Area:** Infra
+**Decision:** SSM Parameter Store paths: `/heediq/{service}/{param}` — e.g. `/heediq/api/cognito-user-pool-id`. Secrets Manager paths: `/heediq/{service}/{secret}` — e.g. `/heediq/api/stripe-secret-key`. No environment prefix in either (account-scoped). CDK injects non-secret config (table names, bucket names, Cognito IDs) as Lambda environment variables at deploy time. Actual secrets (Stripe key, Claude API key, Recall.ai key) are fetched from Secrets Manager at Lambda cold start via the AWS Parameters and Secrets Lambda Extension (no SDK call in hot path).
+**Why:** Account boundary makes env prefix redundant. Separating config (env vars, fast) from secrets (Secrets Manager, secure) avoids SSM latency on every config value while keeping secrets out of the Lambda console.
+**Supersedes:** —
+**Superseded by:** —
+**Related code:** `heediq-infra/`, `heediq-api/`
+
+---
+
 ## Stack & Repos
 
 ### D-027 · `develop` integration-branch model (2026-06-16) — Locked
@@ -295,10 +331,50 @@ Confluence BD/TDD/TP/TRM). See `rules/06-documentation.md`.
 - `heediq-api` — Hono on Lambda (all REST endpoints)
 - `heediq-worker-transcription` — Python Fargate (faster-whisper, per D-004/D-005)
 - `heediq-worker-summarization` — Node Lambda (Claude API extraction, per D-032)
-- `heediq-infra` — AWS CDK (all stacks, all envs per D-003)
+- `heediq-infra` — AWS CDK (all stacks, all envs per D-036)
 **Why:** Microservice-level granularity — workers split because they have different runtimes (Python vs Node) and scaling/cost profiles; shared types in own package consumed across repos; infra separated from application code. Not feature-level (too many repos) and not monorepo (polyrepo locked).
 **Supersedes:** — **Superseded by:** —
 **Related code:** github.com/admin-heediq/
+
+### D-039 · Dev tooling — pnpm + Node 22 LTS (2026-06-16) — Locked
+**Area:** Architecture
+**Decision:** pnpm as the package manager across all Node/TypeScript repos (web, api, worker-summarization, shared, infra). Node.js 22 LTS as the runtime version for all Node repos and Lambda functions.
+**Why:** pnpm is faster and deduplicates packages on disk across 7 repos; strict dependency resolution avoids phantom dep bugs. Node 22 LTS is the current active LTS (supported until April 2027); Lambda supports it natively.
+**Supersedes:** — **Superseded by:** —
+**Related code:** all Node repos
+
+### D-040 · `@heediq/shared` delivery via GitHub Packages (2026-06-16) — Locked
+**Area:** Architecture
+**Decision:** `heediq-shared` publishes `@heediq/shared` as a private npm package to GitHub Packages from day one. All other repos install it as a versioned dep. GitHub PAT (or Actions OIDC) authenticates package reads in CI.
+**Why:** Polyrepo requires a published package for cross-repo consumption. `file:` path references create brittle dev-vs-CI divergence. GitHub Packages is the natural fit alongside the existing GitHub org.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `heediq-shared/`
+
+### D-041 · JWT auth enforcement — Hono middleware (2026-06-16) — Locked
+**Area:** Architecture
+**Decision:** Cognito JWT validation happens inside the Lambda via Hono middleware (JWKS-based, e.g. `hono/jwt` or `jose`), not at API Gateway. API Gateway is a plain HTTP API with no authorizer.
+**Why:** Custom auth logic (role checks, org isolation enforcement, usage-ratchet) lives in the Lambda anyway; centralizing in Hono middleware means one place for all auth/authz rather than splitting between Gateway config and code. Full control over error response shape (per D-033 consistent error envelope).
+**Supersedes:** — **Superseded by:** —
+**Related code:** `heediq-api/`
+
+### D-042 · API versioning — `/api/v1/` URL prefix (2026-06-16) — Locked
+**Area:** Architecture
+**Decision:** All REST endpoints are prefixed `/api/v1/` from day one.
+**Why:** Zero cost to add now; avoids a painful rename when a second client (native app, partner) can't be force-updated alongside a breaking API change.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `heediq-api/`
+
+### D-043 · CI/CD pipeline structure (2026-06-16) — Locked
+**Area:** Infra / Process
+**Decision:** Consistent GitHub Actions pattern across all repos:
+- **PR** → typecheck + unit tests only (no AWS calls).
+- **Merge to `develop`** → assume `GitHubActionsDeployRole` in dev account → deploy to dev.
+- **Merge to `main`** → assume role in staging → deploy to staging; manual approval job → assume role in prod → deploy to prod.
+- Container images (Fargate workers) push to ECR in the shared-services account first, then ECS deploy in the target workload account.
+- `heediq-infra` deploys shared resources (DynamoDB tables, SQS, S3, Cognito) first; app repo workflows deploy only their Lambda/ECS service on top of existing infra. Infra changes are applied before app deploys via workflow dependency or ordering convention.
+**Why:** Keeps credentials out of GitHub Secrets (OIDC only); consistent pattern is copy-pasteable across repos; infra-before-app ordering prevents deploy-time resource-not-found errors.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `heediq-infra/`, all app repos `.github/workflows/`
 
 ---
 
