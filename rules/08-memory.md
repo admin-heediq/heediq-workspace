@@ -57,6 +57,41 @@ Per feature: **Upstream** (depends on), **Downstream** (breaks if this changes),
 Update on every change that adds/changes/removes a feature or dependency. Drives "what to retest"
 (Step 2) and PR blast-radius notes.
 
+## Coherence check (session start and end)
+
+Run this scan at the **start of every working session** (Step 0c item 5) and again at the **end**
+(Step 6). It is fast — scan for specific patterns, not a full read of every file.
+
+**Files to scan:**
+| File | What to verify |
+|---|---|
+| `DECISIONS.md` | The reference — note what is Locked and what is Superseded. |
+| `memory/business/architecture.md`, `product.md` | Must not describe superseded decisions as current. |
+| All `rules/*.md` | Must not label locked decisions as "proposed" or "confirm or change". |
+| `CLAUDE.md` | Must not duplicate content from DECISIONS.md or detail files — pointer only. |
+
+**What to check (in order):**
+1. **Superseded decisions in detail files.** Does any detail file describe something DECISIONS.md
+   now marks `Superseded by D-NNN`? Update the detail file to reflect the current decision and
+   add a pointer to the superseding entry.
+2. **"Proposed" language for locked items.** Scan rules files for the words "proposed", "confirm
+   or change", "still open", "not yet locked". If the item now has a Locked entry in DECISIONS.md,
+   replace the qualifier with a decision ID reference (e.g. "Locked stack (D-030)").
+3. **Duplicated decision content.** If a rules file or CLAUDE.md restates the full content of a
+   locked decision rather than referencing its ID, that is duplication — reduce to a pointer.
+4. **Broken or superseded ID references.** If a file references D-NNN, confirm the entry exists
+   in DECISIONS.md and is not marked Superseded. If it is superseded, update the reference to the
+   new ID.
+
+**On finding a mismatch:** fix it immediately (always a one-line change), commit, then continue.
+Never carry staleness into the working session.
+
+**On ambiguity** (you cannot tell which version is correct): flag it — *"This conflicts with D-NNN
+— which is current?"* — and wait for resolution before writing.
+
+**Optimization trigger:** if a single pass finds more than 3 mismatches, propose a full
+consolidation pass (see Memory optimization below) before continuing work.
+
 ## Memory optimization (when memory grows noisy)
 When memory accumulates enough that it starts to feel repetitive, scattered, or hard to navigate,
 do a consolidation pass. This is triggered by Andrii's request, not done silently on every task.

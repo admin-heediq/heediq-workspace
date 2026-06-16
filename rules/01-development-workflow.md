@@ -32,6 +32,8 @@ from the WIP state (skip Steps 1–2). If no, ask what to do.
 3. Check `memory/codebase/feature_dependency_map.md` for the feature(s) involved — note upstream
    dependencies and downstream consumers; carry them into Step 2.
 4. Use what you find to skip redundant questions and write a sharper plan.
+5. **Coherence check** (session start only — skip for quick questions mid-session): run the scan
+   defined in `08-memory.md` (Coherence check). Fix any mismatches and commit before proceeding.
 
 If no memory/README exists for the area, note it — it gets created as you learn (see Step 6).
 
@@ -72,7 +74,7 @@ Run the service's typecheck/build (command lives in the relevant package's READM
 Fix all errors before committing. Skip only if the user explicitly says so.
 
 ## Step 4.6 — Test gate before opening a PR
-`npm run test:pre-pr` (typecheck + unit) green, **and** the related integration suites pass (derive
+`pnpm run test:pre-pr` (typecheck + unit) green, **and** the related integration suites pass (derive
 them from the dependency map). Fix failures at the source — never `--no-verify`, never delete the
 failing assertion. The PR description lists tests added and suites run. See `05-testing.md`.
 
@@ -92,8 +94,9 @@ nearest README. Pure UI tweaks, copy, and refactors that don't change behavior u
 
 ## Step 6 — Memory actualization (end of every task)
 Final memory pass after Step 5. Confirm: every README/memory file touched reflects reality; new code
-README paths are pointed to from `MEMORY.md`; `feature_dependency_map.md` is current. See
-`08-memory.md`.
+README paths are pointed to from `MEMORY.md`; `feature_dependency_map.md` is current. Run the
+**coherence check** from `08-memory.md` to confirm no staleness was introduced by decisions locked or
+changed this session. All memory changes committed; push if the session is ending. See `08-memory.md`.
 
 ---
 
