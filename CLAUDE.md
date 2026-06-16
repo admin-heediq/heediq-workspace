@@ -71,31 +71,8 @@ The detailed rules live in the imported modules below. Read the relevant module 
 
 ---
 
-## Workspace decisions — status
+## Decisions
 
-Locked (recorded in `memory/business/DECISIONS.md`):
-- **Git host = GitHub** (`gh` for PRs; GitHub Actions CI). — D-013
-- **No Jira / no issue tracker for now**, may adopt later; branches use `<type>/<short-desc>`. — D-014
-- **Two-track memory + auto decision capture.** — D-015
-- **Docs = code-level READMEs** (no Confluence). — D-016
-- **`develop` integration-branch model.** — D-027
-- **UI stack = Tailwind + Radix UI + shadcn-style local kit.** — D-028
-- **Frontend build = Vite + React + TypeScript strict + React Router + TanStack Query.** — D-029
-- **Test stack = Vitest/RTL + DynamoDB Local/LocalStack + Playwright + k6.** — D-030
-- **DynamoDB multi-table at launch; SQL migration path open per service.** — D-031
-- **Summarization/extraction = Claude API behind provider interface.** — D-032
-- **API style = REST + `@heediq/shared` Zod schemas.** — D-033
-- **API runtime = Hono on single Lambda.** — D-034
-- **Polyrepo, 7 repos** (workspace, shared, web, api, worker-transcription, worker-summarization, infra). — D-035
-- **5-account AWS structure** (management, shared-services, dev, staging, prod) + SSO + GitHub Actions OIDC. Supersedes D-003. — D-036
-- **Resource naming = `heediq-{entity}`, no env prefix** (account IS the environment). — D-037
-- **SSM/secrets path = `/heediq/{service}/{param}`**, no env prefix; CDK env vars for config, Secrets Manager for secrets. — D-038
-- **Dev tooling = pnpm + Node 22 LTS** across all Node repos. — D-039
-- **`@heediq/shared` published to GitHub Packages** (private) from day one. — D-040
-- **JWT auth = Hono middleware** (JWKS), not API Gateway authorizer. — D-041
-- **API versioning = `/api/v1/` prefix** from day one. — D-042
-- **CI/CD = per-repo GitHub Actions, OIDC role assumption per account**; infra deploys before app repos. — D-043
-
-Still open (not yet locked):
-- **Exact pricing/packaging numbers** — principle locked D-011/D-019; numbers need revisiting against post-D-004 cost basis.
-- **SAML/OIDC for enterprise IdPs** — deferred per D-020.
+All locked decisions live in **`memory/business/DECISIONS.md`** — the canonical source of truth.
+Read it at task start (Step 0c) before planning or writing any code. Never act against a locked
+decision without explicitly superseding it.
