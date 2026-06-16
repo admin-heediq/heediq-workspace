@@ -4,92 +4,241 @@ Canonical, append-only record of locked decisions — the business-memory source
 format per `rules/09-decisions.md`. Read this at the start of every chat; locked decisions are
 constraints.
 
-> **Migration note:** the prior `heediq-decisions.md` artifact is the original home of decisions made
-> before this repo existed. Its full, exact text (including verbatim values like logo SVG coordinates
-> and precise cost figures) should be **migrated here verbatim** — do not reconstruct exact specs from
-> memory. The imported entries below are concise index stubs until that paste happens; treat the
-> original artifact as authoritative for any detail.
+> **Migration complete (2026-06-16):** the entries below were migrated from the original chat
+> history verbatim (not reconstructed from a memory summary). Detailed text — SVG coordinates,
+> exact cost figures, full brand story, etc. — now lives in `branding.md`, `product.md`, and
+> `architecture.md` in this folder; entries here stay lean and link out per `rules/09-decisions.md`.
+> Worth a quick skim against the source before treating these as final, since they were assembled
+> from several past conversations rather than confirmed fresh in this one.
 
 ---
 
-## Imported (locked before this repo — verify detail against the original `heediq-decisions.md`)
+## Architecture & Infrastructure
 
-### D-001 · Full AWS serverless stack — Locked
-**Area:** Architecture · **Decision:** Build on a full AWS serverless stack (Lambda, Fargate, SQS,
-DynamoDB). **Why:** scalability + cost at Heediq's profile. *(Migrate full text.)*
+### D-001 · Full AWS serverless stack — Locked (2026-06-11)
+**Area:** Architecture
+**Decision:** Build on a full AWS serverless stack: Lambda, API Gateway, Fargate Spot, DynamoDB,
+S3, SQS, EventBridge, Cognito, CloudFront, Route 53, Secrets Manager, CloudWatch.
+**Why:** scalability + cost profile fits Heediq's usage-spiky, mostly-async workload.
+**Related:** `memory/business/architecture.md`
 
-### D-002 · AWS CDK + GitHub Actions CI/CD — Locked
-**Area:** Infra · **Decision:** IaC via AWS CDK; CI/CD via GitHub Actions.
+### D-002 · AWS CDK + GitHub Actions CI/CD — Locked (2026-06-11)
+**Area:** Infra
+**Decision:** IaC via AWS CDK; CI/CD via GitHub Actions.
+**Related:** `memory/business/architecture.md`
 
-### D-003 · Three AWS accounts + shared ECR — Locked
-**Area:** Infra · **Decision:** Separate prod/staging/dev accounts under one AWS Organization; a single
-shared ECR registry — build the image once, promote across environments.
+### D-003 · Three AWS accounts + shared ECR — Locked (2026-06-11)
+**Area:** Infra
+**Decision:** Separate prod/staging/dev accounts under one AWS Organization; a single shared ECR
+registry — build the image once, promote across environments. Branch-based deployment with a
+manual approval gate before production.
+**Related:** `memory/business/architecture.md`
 
-### D-004 · Self-hosted faster-whisper on Fargate Spot — Locked
-**Area:** Infra / Cost · **Decision:** Transcription runs on self-hosted `faster-whisper` on AWS
-Fargate Spot via SQS. AWS Transcribe dropped entirely. **Why:** dramatically cheaper at scale.
+### D-004 · Self-hosted faster-whisper on Fargate Spot — Locked (2026-06-11)
+**Area:** Infra / Cost
+**Decision:** Transcription runs on self-hosted `faster-whisper` on AWS Fargate Spot via SQS.
+AWS Transcribe dropped entirely.
+**Why:** ~70–75× cheaper than AWS Transcribe at scale (~$6/mo vs ~$432/mo at 10 meetings/day);
+makes a usage-inclusive pricing model viable at all.
+**Related:** `memory/business/architecture.md`
 
-### D-005 · Transcription tiers — Locked
-**Area:** Cost · **Decision:** Free tier = whisper `small` on CPU (~2¢/60-min meeting); paid tier =
-whisper `large-v3` + pyannote diarization with chunked parallel processing (~12¢/60-min meeting).
+### D-005 · Transcription tiers — Locked (2026-06-11)
+**Area:** Cost
+**Decision:** Free tier = whisper `small` on CPU (~$0.02/60-min meeting, capped 30–45 min/recording);
+paid tier = whisper `large-v3` + pyannote diarization with chunked parallel processing
+(~$0.12/60-min meeting).
+**Related:** `memory/business/architecture.md`
 
-### D-006 · Cost optimizations — Locked
-**Area:** Cost · **Decision:** Silence trimming (10–30% duration reduction) accepted as safe; 2× audio
-speed-up rejected (degrades accuracy).
+### D-006 · Transcription cost optimizations — Locked (2026-06-11)
+**Area:** Cost
+**Decision:** Silence trimming accepted (10–30% duration reduction, safe). 2× audio speed-up
+rejected (degrades word-error-rate and diarization accuracy too much).
+**Related:** `memory/business/architecture.md`
 
-### D-007 · DynamoDB-only at launch — Locked
-**Area:** Architecture · **Decision:** DynamoDB only at launch; Aurora Serverless v2 deferred (possible
-future migration).
+### D-007 · DynamoDB-only at launch — Locked (2026-06-11)
+**Area:** Architecture
+**Decision:** DynamoDB only at launch; Aurora Serverless v2 deferred (possible future migration
+for relational queries).
+**Why:** Aurora's ~$45/mo fixed floor dominates the bill disproportionately at early scale.
+**Related:** `memory/business/architecture.md`
 
-### D-008 · Design system tokens — Locked
-**Area:** Design · **Decision:** Charcoal/amber color tokens; Inter/Geist for UI; JetBrains Mono for
-transcripts; three-state Listen button (idle/recording/processing); brand name styled lowercase as
-"heediq" in UI. *(Migrate exact token values.)*
+### D-021 · Multi-tenancy — shared DB, row-level isolation — Locked (2026-06-11)
+**Area:** Architecture
+**Decision:** Single shared database, row-level tenant isolation via `org_id` on every
+tenant-scoped row. Query pattern: `WHERE org_id = :tenant AND (owner_user_id = :user OR :role =
+'admin')`.
+**Related:** `memory/business/architecture.md`
 
-### D-009 · Brand & logo — Locked
-**Area:** Brand · **Decision:** Logo = four angled amber slabs (exact SVG spec in original doc); name
-layers "heed" + "HQ" + "IQ"; full asset library generated. Domain: heediq.com. *(Migrate verbatim SVG.)*
+### D-022 · Data retention & audio lifecycle — Locked (2026-06-11)
+**Area:** Policy
+**Decision:** Free tier — audio + transcript stored 30 days, then audio deleted, transcript kept
+indefinitely. Paid tier — audio stored 90 days then moved to S3 Glacier Deep Archive, transcript
+indefinite. On cancellation: 30-day grace period, then full org data deletion.
+**Why:** transcript text is the actual product value (cheap to retain); audio is the
+expensive/bulky asset and is tiered down or archived.
+**Related:** `memory/business/product.md`
 
-### D-010 · MVP build order — Locked
-**Area:** Product · **Decision:** auth/onboarding → home/Listen → recordings library → recording
-detail/summary (critical path: record → transcribe → summarize → view). Org/billing and calendar/
-meeting-bot settings are follow-on.
-
-### D-011 · Pricing principle — Locked
-**Area:** Pricing · **Decision:** Flat per-seat pricing without usage caps doesn't work at Heediq's
-transcription cost structure; a fair-use meeting-cap model is preferred. *(Exact packaging TBD.)*
+### D-023 · Upload & transcription processing flow — Locked (2026-06-11)
+**Area:** Architecture
+**Decision:** Client uploads directly to S3 via a presigned URL. An S3 event feeds an SQS queue;
+EventBridge Pipes triggers an ECS Fargate Spot `RunTask` (faster-whisper, per D-004) with zero
+idle cost. Job status is written to DynamoDB; client polls for completion.
+**Supersedes:** an earlier S3-event → Lambda → AWS-Transcribe-job orchestration (dropped
+alongside D-004).
+**Related:** `memory/business/architecture.md`
 
 ---
 
-## New (this repo / workspace)
+## Brand & Design
+
+### D-008 · Design system tokens — Locked (2026-06-11)
+**Area:** Design
+**Decision:** Charcoal/amber color token scale; Inter/Geist for UI (400/500 weights only);
+JetBrains Mono for transcripts; 4px-base spacing scale + sm/md/lg/full radius tokens; three-state
+Listen button (idle/recording/processing); inline-hint + dedicated empty states. Brand name
+styled lowercase as "heediq" in UI.
+**Related:** `memory/business/branding.md` (exact hex values, type scale, spacing scale, button
+states, empty-state copy)
+
+### D-009 · Brand & logo — Locked (2026-06-11)
+**Area:** Brand
+**Decision:** Logo = four angled (−12°) amber slabs forming an h+q monogram (exact SVG in
+`branding.md` — reproduce verbatim, do not redesign). Name layers "heed" + "HQ" + "IQ"; the four
+slabs also visually represent "HQ". Domain: heediq.com. Full asset library generated
+(`heediq-brand-assets.zip`).
+**Related:** `memory/business/branding.md` (verbatim SVG, brand story, taglines, asset list)
+
+### D-026 · Home / Listen screen UX — Locked (2026-06-11)
+**Area:** Design
+**Decision:** Home screen centers on one large "Listen" button (Shazam-style primary CTA) for
+live recording. Secondary actions: upload an audio file, upload a text file (skips transcription,
+straight to summary), view recordings. A subtle usage/limit indicator sits in the top bar. The
+recordings library is a separate nav page, not embedded in home.
+**Why:** one obvious primary action keeps the entry point simple; secondary paths cover
+non-live-recording use cases without competing for attention.
+**Related:** `memory/business/product.md`, `memory/business/branding.md` (button states)
+
+---
+
+## Product, Access & Billing
+
+### D-017 · Account & roles model — Locked (2026-06-11)
+**Area:** Product
+**Decision:** Org-first account model for all users; personal users = single-seat org
+(owner/admin), no separate personal account type. Roles: Admin (billing, seats, member
+management, sees all org content) and Member (own content only). No per-recording sharing at
+launch (deferred).
+**Why:** keeps the data model unified across personal and team accounts.
+**Related:** `memory/business/product.md`
+
+### D-018 · Free-tier usage limits — Locked (2026-06-11)
+**Area:** Pricing
+**Decision:** Free tier is a per-org shared usage pool with a one-way usage-decay ratchet: 1
+use/day → after 3 lifetime uses, 2 uses/week → after 6 lifetime uses, 1 use/week (cumulative
+lifetime count, never resets). One "use" = one transcription summarized and delivered. Exceeding
+the limit triggers a soft upgrade prompt, never a hard block. Single paid plan exists alongside
+free at launch.
+**Why:** lets free users get real value while creating natural upgrade pressure without a
+punitive cutoff.
+**Related:** `memory/business/product.md`
+
+### D-019 · Billing — Stripe, org as customer — Locked (2026-06-11)
+**Area:** Pricing
+**Decision:** Stripe is the billing provider. Customer = org (not individual user); per-seat
+quantity-based subscription. No card required on signup/trial; Stripe Checkout triggers only on
+upgrade. Subscription state synced via Stripe webhooks.
+**Related:** `memory/business/product.md`
+
+### D-011 · Pricing principle — Locked (2026-06-11)
+**Area:** Pricing
+**Decision:** Flat per-seat pricing without usage caps or overage billing doesn't work at
+Heediq's transcription cost structure; a fair-use meeting-cap model is preferred.
+**Why:** confirmed via gross-margin math against AWS Transcribe baseline costs.
+**Note:** the original supporting number ($35–40/seat/mo) predates the faster-whisper cost pivot
+(D-004/D-005, ~70–75× cheaper) and should be revisited — exact packaging is still open. See
+`memory/business/product.md`.
+
+### D-020 · Auth — AWS Cognito + federated IdPs — Locked (2026-06-11)
+**Area:** Architecture
+**Decision:** Authentication via AWS Cognito User Pool: email/password plus Google and Microsoft
+(Entra/Azure AD) as federated identity providers, all from day one. SAML/OIDC for enterprise IdPs
+explicitly deferred to later (design auth so it's addable, don't build it now). Email-domain
+match on signup surfaces a "request to join" flow requiring admin approval — automatic
+domain-based addition is explicitly not implemented (security).
+**Related:** `memory/business/product.md`
+
+### D-024 · Platform — mobile-first PWA — Locked (2026-06-11)
+**Area:** Product
+**Decision:** Heediq ships as a mobile-first, desktop-friendly installable PWA. Offline recording
+supported (local capture, queued upload on reconnect; transcripts cached offline). True
+lock-screen background recording is not feasible on iOS Safari; mitigated with the Screen Wake
+Lock API during recording. Push notifications ("transcript ready") built at launch via Web Push
+API (iOS 16.4+ for installed PWAs). Browser baseline: iOS Safari 16.4+, Android Chrome last 2,
+desktop Chrome/Edge/Safari/Firefox last 2. Breakpoints: mobile <640px, tablet 640–1024px, desktop
+>1024px.
+**Why:** one codebase across mobile/desktop without native app-store overhead; explicit
+fallback for iOS's background-audio limitation avoids overselling a capability the platform can't
+deliver.
+**Related:** `memory/business/product.md`
+
+### D-025 · Paid-tier meeting bot — Locked (2026-06-11)
+**Area:** Product
+**Decision:** Paid tier supports an automated meeting bot via a third-party agent (e.g.
+Recall.ai) with calendar OAuth integration, rather than building a custom bot in-house.
+**Why:** third-party agents already solve cross-platform call-joining reliably.
+**Related:** `memory/business/product.md`
+
+### D-010 · MVP build order — Locked (2026-06-11)
+**Area:** Product
+**Decision:** auth/onboarding → home/Listen → recordings library → recording detail/summary
+(critical path: record → transcribe → summarize → view). Org/billing and calendar/meeting-bot
+settings are follow-on.
+**Related:** `memory/business/product.md`
+
+---
+
+## Process (this workspace)
 
 ### D-012 · Workspace rules & memory repo — Locked (2026-06-15)
-**Area:** Process · **Decision:** Adopt `heediq-workspace` as the canonical repo for Claude's rules,
-memory, and plans, hosted at github.com/admin-heediq/heediq-workspace. Root `CLAUDE.md` imports the
-modular rule set; memory is split into business + codebase tracks.
+**Area:** Process
+**Decision:** Adopt `heediq-workspace` as the canonical repo for Claude's rules, memory, and
+plans, hosted at github.com/admin-heediq/heediq-workspace. Root `CLAUDE.md` imports the modular
+rule set; memory is split into business + codebase tracks.
 **Why:** one shared, version-controlled contract and memory for the team.
 
 ### D-013 · GitHub as git host & CI — Locked (2026-06-15)
-**Area:** Infra · **Decision:** Heediq is on GitHub; PRs via `gh`; CI via GitHub Actions.
+**Area:** Infra
+**Decision:** Heediq is on GitHub; PRs via `gh`; CI via GitHub Actions.
 **Supersedes:** — (consistent with D-002).
 
 ### D-014 · No Jira for now — Locked (2026-06-15)
-**Area:** Process · **Decision:** No issue tracker (Jira) for Heediq dev tracking currently; may adopt
-later. Branches/commits use `<type>/<short-kebab-desc>` with no issue key required.
+**Area:** Process
+**Decision:** No issue tracker (Jira) for Heediq dev tracking currently; may adopt later.
+Branches/commits use `<type>/<short-kebab-desc>` with no issue key required.
 
 ### D-015 · Two-track memory + auto-decision-capture — Locked (2026-06-15)
-**Area:** Process · **Decision:** Maintain business memory (decisions, this file) alongside codebase
-memory; decisions are captured automatically and immediately when locked, per `rules/09-decisions.md`.
+**Area:** Process
+**Decision:** Maintain business memory (decisions, this file) alongside codebase memory;
+decisions are captured automatically and immediately when locked, per `rules/09-decisions.md`.
 
 ### D-016 · Documentation via code-level READMEs — Locked (2026-06-15)
-**Area:** Process · **Decision:** Project documentation lives in `README.md` files next to the code
-(replacing Confluence BD/TDD/TP/TRM). See `rules/06-documentation.md`.
+**Area:** Process
+**Decision:** Project documentation lives in `README.md` files next to the code (replacing
+Confluence BD/TDD/TP/TRM). See `rules/06-documentation.md`.
 
 ---
 
 ## Open / proposed (not yet locked)
-- **`develop` integration-branch model** — proposed in `rules/02-git-and-commits.md`; confirm or use
-  `main` + feature branches while solo.
+- **`develop` integration-branch model** — proposed in `rules/02-git-and-commits.md`; confirm or
+  use `main` + feature branches while solo.
 - **UI base = Tailwind + Radix + shadcn/ui-style local kit** — proposed in `rules/03-ui-kit.md`.
 - **Test stack = Vitest/RTL + DynamoDB Local/LocalStack + Playwright + k6** — proposed in
   `rules/05-testing.md`.
+- **Exact pricing/packaging** — principle locked at D-011/D-019; revisit numbers against the
+  post-D-004 cost basis.
+- **Extraction/summarization model** — which LLM turns a transcript into structured
+  requirements/user-stories/decisions/open-questions was only ever a brainstorm-stage suggestion
+  (Claude API with structured JSON output) in the original concept chat. It was never re-confirmed
+  once the architecture was actually locked — needs an explicit decision before this part is built.
+- **SAML/OIDC for enterprise IdPs** — explicitly deferred (D-020); revisit once an enterprise deal
+  needs it. Auth should be designed so it's addable later.

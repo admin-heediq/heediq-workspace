@@ -10,9 +10,16 @@ context.
 
 ## Files
 - **`DECISIONS.md`** — the canonical, append-only decisions log. The single source of truth for
-  locked decisions. See `rules/09-decisions.md` for how entries are captured and formatted.
-- (Grows as needed: e.g. `product.md`, `pricing.md`, `branding.md` — promote a cluster of related
-  decisions into its own file when `DECISIONS.md` gets large, keeping `DECISIONS.md` as the index.)
+  locked decisions (the "what" + "why," kept lean). See `rules/09-decisions.md` for how entries
+  are captured and formatted.
+- **`branding.md`** — name, brand story, taglines, verbatim logo SVG, asset library, color
+  tokens, typography, spacing/radius, Listen-button states, empty states.
+- **`product.md`** — product vision, extraction concept, account/roles model, free-tier &
+  billing, auth, data retention, PWA/platform spec, home screen UX, meeting bot, MVP build order.
+- **`architecture.md`** — AWS stack, environments, multi-tenancy, transcription pipeline & cost
+  figures, engineering process summary.
+- (Grows further as needed — promote a new cluster of related decisions into its own file when
+  one of the above gets large, keeping `DECISIONS.md` as the lean index.)
 
 ## Rules
 - Read `DECISIONS.md` at the start of every conversation/task — locked decisions are **constraints**,

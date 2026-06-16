@@ -35,9 +35,15 @@ clearly locked.
    explicitly and sequentially.
 2. **If it's genuinely ambiguous** whether something is a firm decision or still open discussion, ask
    one short question: *"Lock this as a decision?"* — don't record open brainstorming as locked.
-3. **Write it to `memory/business/DECISIONS.md`** in the entry format below.
-4. **Confirm in one line**, e.g. *"Locked → recorded as D-014 in DECISIONS.md."*
-5. **Claude never self-locks.** Claude proposes and records; only Andrii locks. If Claude recommends
+3. **Before writing, verify against existing decisions** (see `rules/08-memory.md` — Verify before
+   every write). Specifically:
+   - Does an existing entry already cover this? If yes, update it rather than adding a duplicate.
+   - Does this conflict with an existing locked decision? If yes, flag it before writing:
+     *"This conflicts with D-NNN (title) — supersede it, or keep both?"*
+   - Is the scope or wording unclear? Ask one short question before writing.
+4. **Write it to `memory/business/DECISIONS.md`** in the entry format below.
+5. **Confirm in one line**, e.g. *"Locked → recorded as D-014 in DECISIONS.md."*
+6. **Claude never self-locks.** Claude proposes and records; only Andrii locks. If Claude recommends
    something, it stays a proposal until Andrii confirms.
 
 ## Apply decisions as constraints (every chat)
