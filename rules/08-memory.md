@@ -57,37 +57,38 @@ Per feature: **Upstream** (depends on), **Downstream** (breaks if this changes),
 Update on every change that adds/changes/removes a feature or dependency. Drives "what to retest"
 (Step 2) and PR blast-radius notes.
 
-## Coherence check (session start and end)
+## Coherence check — mandatory, blocking, every session
 
-Run this scan at the **start of every working session** (Step 0c item 5) and again at the **end**
-(Step 6). It is fast — scan for specific patterns, not a full read of every file.
+**This runs before any other work, every session, no exceptions — not even for quick questions.**
+Inconsistent decisions across files are not a minor inconvenience. They are a build risk: code gets
+written against wrong constraints, decisions get re-litigated, trust in the memory system collapses.
+Do not proceed with any task until this check is clean.
 
-**Files to scan:**
+**Files to scan every time:**
 | File | What to verify |
 |---|---|
-| `DECISIONS.md` | The reference — note what is Locked and what is Superseded. |
+| `DECISIONS.md` | The reference — read what is Locked and what is Superseded. |
 | `memory/business/architecture.md`, `product.md` | Must not describe superseded decisions as current. |
 | All `rules/*.md` | Must not label locked decisions as "proposed" or "confirm or change". |
 | `CLAUDE.md` | Must not duplicate content from DECISIONS.md or detail files — pointer only. |
 
-**What to check (in order):**
+**What to check (in order — all four, every time):**
 1. **Superseded decisions in detail files.** Does any detail file describe something DECISIONS.md
    now marks `Superseded by D-NNN`? Update the detail file to reflect the current decision and
    add a pointer to the superseding entry.
 2. **"Proposed" language for locked items.** Scan rules files for the words "proposed", "confirm
-   or change", "still open", "not yet locked". If the item now has a Locked entry in DECISIONS.md,
-   replace the qualifier with a decision ID reference (e.g. "Locked stack (D-030)").
+   or change", "still open", "not yet locked". If the item has a Locked entry in DECISIONS.md,
+   replace the qualifier with the decision ID reference (e.g. `Locked stack (D-030)`).
 3. **Duplicated decision content.** If a rules file or CLAUDE.md restates the full content of a
    locked decision rather than referencing its ID, that is duplication — reduce to a pointer.
-4. **Broken or superseded ID references.** If a file references D-NNN, confirm the entry exists
-   in DECISIONS.md and is not marked Superseded. If it is superseded, update the reference to the
-   new ID.
+4. **Broken or superseded ID references.** If any file references D-NNN, confirm the entry exists
+   in DECISIONS.md and is not marked Superseded. If superseded, update the reference to the new ID.
 
-**On finding a mismatch:** fix it immediately (always a one-line change), commit, then continue.
-Never carry staleness into the working session.
+**On finding any mismatch:** fix it immediately, commit, then continue. One mismatch or ten — fix
+all before proceeding. Never carry staleness forward.
 
-**On ambiguity** (you cannot tell which version is correct): flag it — *"This conflicts with D-NNN
-— which is current?"* — and wait for resolution before writing.
+**On ambiguity** (cannot tell which version is correct): stop and flag — *"This conflicts with
+D-NNN — which is current?"* — wait for resolution before writing anything.
 
 **Optimization trigger:** if a single pass finds more than 3 mismatches, propose a full
 consolidation pass (see Memory optimization below) before continuing work.

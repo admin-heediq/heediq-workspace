@@ -32,8 +32,9 @@ from the WIP state (skip Steps 1–2). If no, ask what to do.
 3. Check `memory/codebase/feature_dependency_map.md` for the feature(s) involved — note upstream
    dependencies and downstream consumers; carry them into Step 2.
 4. Use what you find to skip redundant questions and write a sharper plan.
-5. **Coherence check** (session start only — skip for quick questions mid-session): run the scan
-   defined in `08-memory.md` (Coherence check). Fix any mismatches and commit before proceeding.
+5. **Coherence check — blocking.** Run the full scan from `08-memory.md` (Coherence check).
+   Fix every mismatch found and commit before any other work. This step is **never skipped** —
+   not for quick questions, not mid-session, not ever. Inconsistent decisions are a build risk.
 
 If no memory/README exists for the area, note it — it gets created as you learn (see Step 6).
 

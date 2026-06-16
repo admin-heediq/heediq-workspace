@@ -53,7 +53,7 @@ The detailed rules live in the imported modules below. Read the relevant module 
 
 ---
 
-## Three things that are always true
+## Four things that are always true
 
 1. **Decisions are locked before they are built, and captured the moment they're locked.** Andrii
    discusses and confirms, then we build. When any decision is locked in chat, record it
@@ -68,6 +68,12 @@ The detailed rules live in the imported modules below. Read the relevant module 
 3. **The UI is built once.** Every visual element (button, card, spinner, layout) is defined once in
    the UI kit and reused — never re-styled inline in a feature. Every wait the user experiences is
    visible. See `rules/03-ui-kit.md` and `rules/04-loading-and-feedback.md`.
+
+4. **The context is always coherent before any work begins.** At the start of every session — before
+   planning, before answering, before writing a single line — run the coherence check from
+   `rules/08-memory.md`. Fix every mismatch and commit it. No exceptions. Inconsistent decisions
+   across files are a build risk: code gets written against wrong constraints and trust in the memory
+   system collapses. This is non-negotiable.
 
 ---
 
