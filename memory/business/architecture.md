@@ -11,9 +11,16 @@ Cognito, CloudFront, Route 53, Secrets Manager, CloudWatch.
 - Frontend: React (PWA)
 
 ## Environments
-Three separate AWS accounts (prod / staging / dev) under one AWS Organization. A single shared
-ECR registry — build the container image once, promote the same image across dev → staging →
-prod. CI/CD is branch-based with a manual approval gate before production deploys.
+Five AWS accounts under one AWS Organization (D-036):
+- **Management** — org root, IAM Identity Center (SSO), consolidated billing. No workloads.
+- **Shared services** — ECR (all container images) and future cross-environment shared infrastructure.
+- **Dev / Staging / Prod** — fully isolated workload accounts (DynamoDB, Lambda, S3, SQS, Cognito, etc.).
+
+Human access via IAM Identity Center (SSO) — one login URL, permission sets defined centrally, users assume roles per account. No IAM users or long-lived access keys.
+
+Machine access (GitHub Actions) via OIDC — a `GitHubActionsDeployRole` per account with branch-scoped trust; no stored AWS credentials in GitHub Secrets. Container images push to ECR in the shared-services account and are promoted by image tag across dev → staging → prod. Manual approval gate before production deploys.
+
+Resource naming: `heediq-{entity}` with no environment prefix — the account boundary is the environment boundary (D-037). SSM paths: `/heediq/{service}/{param}` (D-038).
 
 ## Multi-tenancy
 Single shared database, row-level tenant isolation via `org_id` on every tenant-scoped row (e.g.
@@ -21,10 +28,7 @@ recordings carry `org_id` + `owner_user_id`). Query pattern:
 `WHERE org_id = :tenant AND (owner_user_id = :user OR :role = 'admin')`.
 
 ## Database
-DynamoDB-only at launch. Aurora Serverless v2 (Postgres) deferred — revisit if/when relational
-queries are genuinely needed beyond DynamoDB's strengths. At small scale, Aurora's ~$45/mo fixed
-floor dominates the bill disproportionately (see Cost baselines below), making the deferral even
-more clearly correct early on.
+DynamoDB-only at launch (D-007). Design: **multi-table** — one table per service/entity domain, e.g. `heediq-recordings`, `heediq-orgs` (D-031). Aurora Serverless v2 (Postgres) deferred — open migration path per service if relational queries become necessary. At small scale, Aurora's ~$45/mo fixed floor dominates the bill disproportionately (see Cost baselines below).
 
 ## Upload & transcription processing flow
 Client uploads audio directly to S3 via a presigned URL (avoids Lambda payload limits, standard
@@ -83,12 +87,12 @@ SQS/EventBridge, Fargate Spot, Cognito (free at this scale), CloudFront/Route 53
 CloudWatch, Secrets Manager.
 
 ## Engineering process
-- Git host: GitHub. PRs via `gh` CLI. CI: GitHub Actions.
-- No issue tracker (Jira) for now — may adopt later. Branch/commit naming:
-  `<type>/<short-kebab-desc>`, no issue key required.
-- Two-track memory model (this repo): business memory (`memory/business/`) + codebase memory
-  (`memory/codebase/`).
+- Git host: GitHub. PRs via `gh` CLI. CI: GitHub Actions — per-repo workflows, OIDC role assumption per account (D-043).
+- No issue tracker (Jira) for now — may adopt later. Branch/commit naming: `<type>/<short-kebab-desc>`. `develop` is the integration branch (D-027).
+- Two-track memory model (this repo): business memory (`memory/business/`) + codebase memory (`memory/codebase/`).
 - Documentation lives in code-level `README.md` files next to the code — replaces Confluence.
-- Still open / proposed (not locked): `develop` integration-branch model vs. `main` + feature
-  branches; UI base (Tailwind + Radix + shadcn/ui-style local kit); test stack (Vitest/RTL +
-  DynamoDB Local/LocalStack + Playwright + k6).
+- **Repos:** 7 polyrepos — workspace, shared, web, api, worker-transcription, worker-summarization, infra (D-035).
+- **API:** REST + Hono on Lambda + `/api/v1/` prefix + `@heediq/shared` Zod schemas (D-033, D-034, D-042).
+- **Frontend:** Vite + React + TypeScript strict + Tailwind + Radix UI + TanStack Query (D-028, D-029).
+- **Test stack:** Vitest/RTL + DynamoDB Local/LocalStack + Playwright + k6 (D-030).
+- **Dev tooling:** pnpm + Node 22 LTS across all Node repos (D-039).

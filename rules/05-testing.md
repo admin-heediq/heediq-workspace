@@ -1,9 +1,8 @@
 # Testing & Quality Gates
 
 The shared *contract* (what must be true). Exact commands and gotchas live in each package's
-`README.md` / `package.json`. **Proposed stack** (confirm or change): Vitest + React Testing Library
-(frontend), Vitest against DynamoDB Local / LocalStack (backend integration), Playwright (E2E), k6
-(load) — see the root decisions.
+`README.md` / `package.json`. **Locked stack (D-030):** Vitest + React Testing Library (frontend),
+Vitest against DynamoDB Local / LocalStack (backend integration), Playwright (E2E), k6 (load).
 
 ## The four test layers
 | Layer | Lives in | Runtime | When |

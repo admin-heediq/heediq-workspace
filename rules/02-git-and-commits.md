@@ -29,10 +29,7 @@ Heediq is on **GitHub** with **GitHub Actions** CI/CD. Use the `gh` CLI for PRs.
   the source.
 
 ## Environments
-Heediq runs three AWS accounts: **dev / staging / prod** under one AWS Organization, with a single
-shared ECR registry (build once, promote across environments). Deployment is via GitHub Actions —
-never hardcode environment values; resolve them from CDK context / SSM per environment. Don't promote
-an image to staging/prod that hasn't passed the test gate on `develop`.
+Heediq runs five AWS accounts under one AWS Organization: management, shared-services, dev, staging, prod (D-036). ECR lives in the shared-services account — build once, promote by image tag across environments. GitHub Actions uses OIDC role assumption (no stored credentials) to deploy to each workload account (D-043). Resource names carry no environment prefix — the account IS the environment (D-037). Never hardcode environment values; resolve from CDK-injected env vars for config and Secrets Manager for secrets (D-038). Don't promote an image to staging/prod that hasn't passed the test gate on `develop`.
 
 ## Opening Pull Requests
 Use `gh pr create --base develop --title "..." --body "..."`. If `gh` isn't installed/authenticated,
