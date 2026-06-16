@@ -48,9 +48,26 @@ clearly locked.
 
 ## Apply decisions as constraints (every chat)
 - Read `DECISIONS.md` at task start (Step 0c). Treat locked decisions as binding context.
-- **Never silently contradict a locked decision.** If a new request conflicts with one, flag it:
-  *"This conflicts with D-009 (DynamoDB-only at launch). Supersede it, or keep D-009?"* — and only
-  change it if Andrii locks the new direction.
+- **Never silently contradict a locked decision.** This applies to both discussion and code.
+
+## Conflict detection — blocking, real-time
+
+If **anything being discussed, planned, or requested** conflicts with a locked decision, stop
+immediately and flag it **before responding to the substance**:
+
+> *"⚠️ This conflicts with **D-NNN · [title]**: [one sentence stating what is locked]. Supersede
+> D-NNN, or adjust the current direction?"*
+
+Do not proceed, do not offer an implementation, do not work around it silently. Surface the conflict
+first — every time, even if it seems obvious that Andrii already knows.
+
+A conflict is resolved only when Andrii explicitly supersedes the old decision (new D-NNN entry) or
+confirms the discussion is actually consistent with it. "Proceed anyway" is not a resolution.
+
+**What counts as a conflict:**
+- A request or proposal that directly contradicts the text of a locked decision
+- A design or implementation that would violate a locked constraint (stack, naming, cost, security)
+- A new decision being discussed that overlaps a locked one without explicitly superseding it
 
 ## Superseding, not duplicating
 Decisions evolve. When a new decision changes an old one:

@@ -59,7 +59,9 @@ The detailed rules live in the imported modules below. Read the relevant module 
    discusses and confirms, then we build. When any decision is locked in chat, record it
    **immediately and unprompted** in **`memory/business/DECISIONS.md`** (the canonical business
    memory), then confirm in one line. Locked decisions are constraints in every future chat — never
-   silently contradict one. See `rules/09-decisions.md`.
+   silently contradict one. If anything being discussed conflicts with a locked decision, flag it
+   immediately before responding to anything else: *"⚠️ This conflicts with D-NNN · [title] —
+   supersede it or adjust the direction?"* Do not proceed until resolved. See `rules/09-decisions.md`.
 
 2. **Documentation lives next to the code.** Each meaningful module/folder carries a `README.md`
    describing what it does, its key files, data flow, contracts, and gotchas. This *replaces*
