@@ -383,6 +383,19 @@ Machine access (GitHub Actions) via OIDC: a `GitHubActionsDeployRole` IAM role i
 **Supersedes:** — **Superseded by:** —
 **Related code:** `heediq-infra/`
 
+### D-045 · AWS account IDs + local CLI profiles (2026-06-17) — Locked
+**Area:** Infra
+**Decision:** Four AWS workload accounts with these IDs and local CLI profile names:
+- shared-services: `313828097088` — profile `heediq-shared`
+- dev: `276594885933` — profile `heediq-dev`
+- staging: `475790160542` — profile `heediq-staging`
+- prod: `438825592314` — profile `heediq-prod`
+
+Management account has no local profile (used only for org/billing via SSO console).
+**Why:** Canonical reference for scripts, CDK, and disaster recovery. Account boundary = environment boundary per D-036/D-037.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `heediq-workspace/scripts/setup-aws-oidc.sh`, `heediq-infra/`
+
 ---
 
 ## Open / proposed (not yet locked)
