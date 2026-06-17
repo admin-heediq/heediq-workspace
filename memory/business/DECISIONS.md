@@ -376,6 +376,13 @@ Machine access (GitHub Actions) via OIDC: a `GitHubActionsDeployRole` IAM role i
 **Supersedes:** — **Superseded by:** —
 **Related code:** `heediq-infra/`, all app repos `.github/workflows/`
 
+### D-044 · Primary AWS region — eu-west-1 Ireland (2026-06-17) — Locked
+**Area:** Infra
+**Decision:** `eu-west-1` (Ireland) is the primary AWS region for all Heediq infrastructure.
+**Why:** Most complete service catalog and lowest cost in Europe; strong Fargate Spot capacity; standard choice for EU SaaS startups targeting UK/EU markets. Frankfurt rejected — no DACH enterprise data-residency requirement at this stage. US expansion would add `us-east-1` as a second region later.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `heediq-infra/`
+
 ---
 
 ## Open / proposed (not yet locked)
