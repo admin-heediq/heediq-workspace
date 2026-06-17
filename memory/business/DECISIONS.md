@@ -407,6 +407,34 @@ Management account has no local profile (used only for org/billing via SSO conso
 **Superseded by:** —
 **Related code:** `claude-workspace/`
 
+### D-047 · Release versioning strategy (2026-06-17) — Locked
+**Area:** Infra / Process
+**Decision:** Services (`heediq-api`, `heediq-web`, workers) use git SHA as the version identifier — Docker images tagged `sha-<7chars>`, Lambda deploys tracked by the same SHA. No semver for services at MVP. `@heediq/shared` uses semver from day one (starts at `0.1.0`; graduates to `1.0.0` when the contract stabilises). Docker images built once on `develop` CI, pushed to ECR with the SHA tag, and promoted to staging/prod by updating the ECS task definition — never rebuilt per environment.
+**Why:** Services are deployed not consumed, so semver adds overhead with no benefit at MVP. `@heediq/shared` is a published package with multiple consumers, so semver is required for safe dependency pinning. Build-once/promote prevents environment drift.
+**Supersedes:** — **Superseded by:** —
+**Related code:** all repos `.github/workflows/`, `heediq-shared/`
+
+### D-048 · Renovate for @heediq/shared dependency updates (2026-06-17) — Locked
+**Area:** Process
+**Decision:** Renovate is configured on all consuming repos (`heediq-api`, `heediq-web`, `heediq-worker-summarization`). When `@heediq/shared` publishes a new version to GitHub Packages, Renovate automatically opens a PR in each consuming repo to bump the dependency. Teams merge when ready.
+**Why:** Avoids manual drift where consuming repos fall behind on shared type updates without anyone noticing. Renovate is better than Dependabot for private GitHub Packages in a monorepo-adjacent setup.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `heediq-shared/`, consuming repos `renovate.json`
+
+### D-049 · Hotfix flow (2026-06-17) — Locked
+**Area:** Process
+**Decision:** Hotfixes branch from `main` (`hotfix/xxx`), get a PR directly to `main`, auto-deploy to staging, manual gate to prod. Immediately after merging to prod, open a follow-up PR to merge `main` back into `develop`. Never leave `main` and `develop` diverged after a hotfix.
+**Why:** Cutting from `main` ensures the fix targets exactly what's in prod, not unreleased develop work. Mandatory back-merge prevents the fix being silently lost on the next develop → main promotion.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `rules/02-git-and-commits.md`
+
+### D-050 · Infra-first deployment convention (2026-06-17) — Locked
+**Area:** Process / Infra
+**Decision:** When a change adds new AWS resources (table, queue, bucket, Cognito config), `heediq-infra` is merged and deployed first; app repos follow after infra deploy succeeds. App repos reference resource names/ARNs via SSM params (per D-038), never hardcoded. This is a process convention enforced by team discipline, not by CI automation at MVP.
+**Why:** Prevents deploy-time resource-not-found errors. SSM param indirection means app code never needs to know the exact ARN at build time.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `heediq-infra/`, `rules/02-git-and-commits.md`
+
 ---
 
 ## Open / proposed (not yet locked)
