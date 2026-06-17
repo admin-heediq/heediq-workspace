@@ -12,12 +12,12 @@ set -euo pipefail
 #   - SSO session active: aws sso login --profile heediq-dev (etc.)
 #
 # Usage:
-#   bash heediq-workspace/scripts/setup-aws-oidc.sh
+#   bash claude-workspace/scripts/setup-aws-oidc.sh
 # ============================================================
 
 # ---- config -------------------------------------------------
 
-GITHUB_ORG="admin-heediq"
+GITHUB_ORG="heediq"
 REGION="eu-west-1"                     # D-044
 OIDC_URL="token.actions.githubusercontent.com"
 OIDC_THUMBPRINT="6938fd4d98bab03faadb97b34396831e3780aea1"

@@ -1,4 +1,4 @@
-# heediq-workspace
+# claude-workspace
 
 Shared Claude Code rules, memory, and workspace configuration for the Heediq monorepo.
 All repos in the workspace inherit these rules automatically when Claude is launched from the
@@ -7,13 +7,13 @@ workspace root.
 ## First-time setup
 
 Clone this repo as a sibling of the other Heediq repos, so the parent directory becomes your
-workspace root (e.g. `~/dev/heediq/heediq-workspace/`). Then run the setup script once — it
+workspace root (e.g. `~/dev/heediq/claude-workspace/`). Then run the setup script once — it
 creates the Claude Code configuration in the workspace root directory.
 
 **macOS / Linux**
 
 ```bash
-bash heediq-workspace/scripts/setup-claude.sh
+bash claude-workspace/scripts/setup-claude.sh
 ```
 
 **Windows (PowerShell)**
@@ -31,7 +31,7 @@ Re-run whenever you pull updates to `scripts/settings.json.tpl` to pick up chang
 
 ## Launching Claude
 
-Always start Claude from the **workspace root** (the directory that contains `heediq-workspace/`),
+Always start Claude from the **workspace root** (the directory that contains `claude-workspace/`),
 not from inside a sub-repo:
 
 ```bash
@@ -46,14 +46,14 @@ Starting from a sub-repo skips the workspace `CLAUDE.md` and the shared rules wo
 | Setting | Where | What it does |
 |---------|-------|-------------|
 | `CLAUDE_CODE_DISABLE_1M_CONTEXT=1` | `settings.json` | Prevents expansion to the 1M token context window |
-| `UserPromptSubmit` hook | `settings.json` | Reminds Claude to read `heediq-workspace/CLAUDE.md` on every prompt |
+| `UserPromptSubmit` hook | `settings.json` | Reminds Claude to read `claude-workspace/CLAUDE.md` on every prompt |
 | `autoCompactEnabled: true` | `settings.local.json` | Auto-compacts context before it fills |
 | `permissions.allow` | `settings.local.json` | Pre-approves common git/SSH commands |
 
 ## Repository layout
 
 ```
-heediq-workspace/
+claude-workspace/
   CLAUDE.md                     ← root rules + imports (Claude reads this first)
   rules/
     01-development-workflow.md  ← Step 0–6 sequence for every change
@@ -89,14 +89,14 @@ recovery re-account.
 **macOS / Linux**
 
 ```bash
-bash heediq-workspace/scripts/setup-aws-oidc.sh
+bash claude-workspace/scripts/setup-aws-oidc.sh
 ```
 
 **Windows — use Git Bash** (ships with Git for Windows, not PowerShell)
 
 ```bash
 # Open Git Bash, then:
-bash heediq-workspace/scripts/setup-aws-oidc.sh
+bash claude-workspace/scripts/setup-aws-oidc.sh
 ```
 
 A native PowerShell port does not exist — inline JSON heredocs are too verbose in PowerShell for

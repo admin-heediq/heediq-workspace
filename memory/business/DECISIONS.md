@@ -206,6 +206,7 @@ settings are follow-on.
 plans, hosted at github.com/admin-heediq/heediq-workspace. Root `CLAUDE.md` imports the modular
 rule set; memory is split into business + codebase tracks.
 **Why:** one shared, version-controlled contract and memory for the team.
+**Superseded by:** D-046
 
 ### D-013 · GitHub as git host & CI — Locked (2026-06-15)
 **Area:** Infra
@@ -333,7 +334,7 @@ Machine access (GitHub Actions) via OIDC: a `GitHubActionsDeployRole` IAM role i
 - `heediq-worker-summarization` — Node Lambda (Claude API extraction, per D-032)
 - `heediq-infra` — AWS CDK (all stacks, all envs per D-036)
 **Why:** Microservice-level granularity — workers split because they have different runtimes (Python vs Node) and scaling/cost profiles; shared types in own package consumed across repos; infra separated from application code. Not feature-level (too many repos) and not monorepo (polyrepo locked).
-**Supersedes:** — **Superseded by:** —
+**Supersedes:** — **Superseded by:** D-046
 **Related code:** github.com/admin-heediq/
 
 ### D-039 · Dev tooling — pnpm + Node 22 LTS (2026-06-16) — Locked
@@ -394,7 +395,17 @@ Machine access (GitHub Actions) via OIDC: a `GitHubActionsDeployRole` IAM role i
 Management account has no local profile (used only for org/billing via SSO console).
 **Why:** Canonical reference for scripts, CDK, and disaster recovery. Account boundary = environment boundary per D-036/D-037.
 **Supersedes:** — **Superseded by:** —
-**Related code:** `heediq-workspace/scripts/setup-aws-oidc.sh`, `heediq-infra/`
+**Related code:** `claude-workspace/scripts/setup-aws-oidc.sh`, `heediq-infra/`
+
+---
+
+### D-046 · GitHub org rename + workspace repo rename (2026-06-17) — Locked
+**Area:** Process / Infra
+**Decision:** GitHub org renamed from `admin-heediq` to `heediq`. Workspace repo renamed from `heediq-workspace` to `claude-workspace`. All 7 repos now live under `github.com/heediq/`. Remote: `git@github-heediq:heediq/claude-workspace.git`.
+**Why:** cleaner org name; workspace repo name reflects its actual content (Claude workspace config) rather than the product name.
+**Supersedes:** D-012, D-035 (org/repo references only; polyrepo structure unchanged)
+**Superseded by:** —
+**Related code:** `claude-workspace/`
 
 ---
 

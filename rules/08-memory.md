@@ -5,7 +5,7 @@ READMEs apply. It does **not** duplicate full decision text (that's `memory/busi
 or full design docs (those are code READMEs). Keep it small and pointer-heavy.
 
 ## Where memory lives
-All memory lives in **`heediq-workspace/memory/`** — normal, version-controlled repo files, shared by
+All memory lives in **`claude-workspace/memory/`** — normal, version-controlled repo files, shared by
 the team. This overrides any default per-user memory path. After writing memory, commit & push it so
 teammates get it; pull regularly.
 
@@ -119,7 +119,7 @@ out of sync.
 
 **After each memory write:**
 ```
-cd heediq-workspace
+cd claude-workspace
 git add memory/business/<file> memory/codebase/<file>   # stage only the changed memory files
 git commit -m "docs(memory): <one-line summary of what was added/changed>"
 ```

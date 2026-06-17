@@ -9,7 +9,7 @@ Heediq is on **GitHub** with **GitHub Actions** CI/CD. Use the `gh` CLI for PRs.
 - **Branch naming**: `<type>/<short-kebab-desc>` (e.g. `feature/recordings-library`,
   `fix/transcript-overflow`). No issue tracker is in use yet (D-014); if Jira is adopted later,
   switch to `<type>/<KEY>-<short-kebab-desc>`. Types: `feature`, `fix`, `hotfix`, `refactor`,
-  `chore`, `docs`, `perf`, `test`. The `heediq-workspace` docs repo is exempt — commit memory/plans
+  `chore`, `docs`, `perf`, `test`. The `claude-workspace` docs repo is exempt — commit memory/plans
   straight to its default branch.
 - **One branch = one logical change** (default). A developer may land multiple related commits on one
   branch — their call. At the end of each implementation session, always ask: *"Open a PR now or keep

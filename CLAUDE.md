@@ -1,7 +1,7 @@
 # Heediq Workspace — Claude Rules (root)
 
 This is the **single contract** for how Claude works on Heediq. It is version-controlled in
-`heediq-workspace` and pulled by every developer, so the team accumulates one shared memory and one
+`claude-workspace` and pulled by every developer, so the team accumulates one shared memory and one
 set of rules. Launch Claude from the workspace root so this file (and everything it imports) always
 loads.
 
@@ -13,10 +13,10 @@ structured requirements / decisions / open questions → push to Jira/Confluence
 
 ## How this repo is laid out
 
-Repo: **github.com/admin-heediq/heediq-workspace**
+Repo: **github.com/heediq/claude-workspace**
 
 ```
-heediq-workspace/
+claude-workspace/
   CLAUDE.md                     ← you are here (root rules + imports)
   rules/
     01-development-workflow.md  ← the Step 0–6 sequence for every change
