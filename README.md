@@ -74,7 +74,40 @@ heediq-workspace/
   plans/
     wip-*.md                    ← one WIP file per in-flight branch
   scripts/
-    setup-claude.sh             ← setup script (macOS/Linux)
-    setup-claude.ps1            ← setup script (Windows)
+    setup-claude.sh             ← Claude Code config setup (macOS/Linux)
+    setup-claude.ps1            ← Claude Code config setup (Windows PowerShell)
+    setup-aws-oidc.sh           ← GitHub Actions OIDC roles setup (all platforms — see note)
     settings.json.tpl           ← team settings template (path-substituted by scripts)
+```
+
+## AWS setup scripts
+
+`setup-aws-oidc.sh` creates the GitHub Actions OIDC providers and IAM roles across all four AWS
+accounts in one idempotent run. Run it once after provisioning accounts, or again after a disaster
+recovery re-account.
+
+**macOS / Linux**
+
+```bash
+bash heediq-workspace/scripts/setup-aws-oidc.sh
+```
+
+**Windows — use Git Bash** (ships with Git for Windows, not PowerShell)
+
+```bash
+# Open Git Bash, then:
+bash heediq-workspace/scripts/setup-aws-oidc.sh
+```
+
+A native PowerShell port does not exist — inline JSON heredocs are too verbose in PowerShell for
+no practical gain, since Git Bash covers all Windows developer setups. If you're using WSL, note
+that AWS CLI profiles must be configured separately inside the WSL environment.
+
+Make sure SSO sessions are active in all profiles before running:
+
+```bash
+aws sso login --profile heediq-shared
+aws sso login --profile heediq-dev
+aws sso login --profile heediq-staging
+aws sso login --profile heediq-prod
 ```
