@@ -437,6 +437,42 @@ Management account has no local profile (used only for org/billing via SSO conso
 
 ---
 
+### D-051 · DNS — Route 53 hosted zone in shared-services account (2026-06-17) — Locked
+**Area:** Infra
+**Decision:** The Route 53 public hosted zone for `heediq.com` lives in the shared-services account (`313828097088`). Management account retains minimal footprint (SSO + billing only).
+**Why:** Shared-services is already the cross-environment hub (ECR, future shared infra); DNS belongs there rather than polluting the management account with workload-level resources.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `heediq-infra/`
+
+### D-052 · Subdomain structure per environment (2026-06-17) — Locked
+**Area:** Infra
+**Decision:** Environment prefix on all non-prod subdomains; prod sits on the root domain. All subdomains are single-level to stay within the wildcard cert coverage:
+- Prod: `heediq.com` (web), `api.heediq.com` (API)
+- Staging: `staging.heediq.com` (web), `api-staging.heediq.com` (API)
+- Dev: `dev.heediq.com` (web), `api-dev.heediq.com` (API)
+**Why:** Single-level subdomains are all covered by `*.heediq.com`; two-level subdomains (e.g. `api.staging.heediq.com`) would require additional wildcard certs per environment.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `heediq-infra/`
+
+### D-053 · ACM certificate strategy (2026-06-17) — Locked
+**Area:** Infra
+**Decision:** Two wildcard ACM certificates, both covering `heediq.com` + `*.heediq.com`:
+- `us-east-1` — used by CloudFront (required by AWS; all CloudFront certs must be in us-east-1)
+- `eu-west-1` — used by API Gateway regional endpoint (cert must be co-located with the endpoint)
+DNS validation via Route 53 (D-051). No per-subdomain certs unless a specific requirement arises.
+**Why:** Single wildcard per region covers all current and future subdomains (D-052) without managing individual certs. Wildcard in both regions needed because CloudFront and API Gateway require certs in different regions.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `heediq-infra/`
+
+### D-054 · Transactional email via Amazon SES (2026-06-17) — Locked
+**Area:** Architecture / Infra
+**Decision:** Amazon SES in `eu-west-1` for all transactional email (auth flows, notifications). Domain verified on `heediq.com`; sending address `noreply@heediq.com`. DKIM, SPF, and DMARC configured at domain verification. SES sandbox exit requested before launch.
+**Why:** Native AWS service — same account/region as the rest of the stack, CDK-manageable, cheapest at scale ($0.10/1000 emails). Third-party providers (Resend, Postmark) rejected to avoid an extra vendor dependency given existing AWS commitment.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `heediq-infra/`
+
+---
+
 ## Open / proposed (not yet locked)
 - **Exact pricing/packaging** — principle locked at D-011/D-019; revisit numbers against the post-D-004 cost basis.
 - **SAML/OIDC for enterprise IdPs** — explicitly deferred (D-020); revisit once an enterprise deal needs it.
