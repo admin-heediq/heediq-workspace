@@ -12,7 +12,9 @@ duplicate their content. See `rules/08-memory.md` for the contract.
   decision IDs (e.g. D-007) from entries below; don't copy decision text here.
 
 ## Modules / Features (pointers)
-_(Add entries as the codebase grows. Format below.)_
+
+- **heediq-infra** — CDK TypeScript project; all stacks for all accounts.
+  README: `../../heediq-infra/README.md` · Decisions: D-036, D-037, D-038, D-044, D-045, D-051–D-055
 
 <!--
 - **<feature/area>** — <one-line summary>.
