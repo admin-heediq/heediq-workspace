@@ -486,6 +486,13 @@ DNS validation via Route 53 (D-051). No per-subdomain certs unless a specific re
 **Supersedes:** — **Superseded by:** —
 **Related code:** `heediq-infra/`, `heediq-worker-transcription/`
 
+### D-056 · Dev account budgets — $50/month via management account CLI script (2026-06-18) — Locked
+**Area:** Infra / Cost
+**Decision:** $50/month monthly cost budget for the dev account (`276594885933`), created in the management account with a `LinkedAccount` filter. Split into two budgets (ACTUAL + FORECASTED) due to AWS's 10-notification-per-budget limit. Thresholds: 1, 10, 25, 50, 70, 85, 95% of budget — email alerts to `andriiperevoznyi@gmail.com`. Block at 100% via SCP Budget Action not yet automated (manual console setup documented in script header). Management account local SSO profile: `heediq-management`. No CDK/CloudFormation — provisioned via `heediq-infra/scripts/setup-budgets.sh` to keep management account free of CDK bootstrap (D-036).
+**Why:** Management account must stay minimal (D-036). CLI script is reproducible and version-controlled without bootstrap overhead. Staging/prod budgets added later as separate linked-account budget entries when those accounts see real traffic.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `heediq-infra/scripts/setup-budgets.sh`
+
 ---
 
 ## Open / proposed (not yet locked)
