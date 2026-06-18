@@ -473,6 +473,21 @@ DNS validation via Route 53 (D-051). No per-subdomain certs unless a specific re
 
 ---
 
+### D-055 · Compute resource sizing at launch (2026-06-17) — Locked
+**Area:** Infra / Cost
+**Decision:** All environments (dev/staging/prod) start at identical minimum viable resource settings. Scale up when real traffic demands it — no environment differentiation at launch.
+- **Fargate — free-tier transcription task** (whisper small, CPU): 1 vCPU, 2 GB RAM
+- **Fargate — paid-tier transcription task** (whisper large-v3 + pyannote, CPU): 4 vCPU, 8 GB RAM. Note: Fargate has no GPU support; large-v3 runs on CPU via Fargate Spot (acceptable for async batch jobs).
+- **Lambda — API (Hono, D-034)**: 512 MB, 30s timeout
+- **Lambda — summarization worker (D-032)**: 512 MB, 5 min timeout
+- **DynamoDB**: `PAY_PER_REQUEST` (on-demand) in all environments — no baseline cost, auto-scales, right for zero-to-low traffic
+- **CloudFront price class**: `PriceClass_100` (US + EU edge locations) — fits EU SaaS target market; ~40% cheaper than all-regions
+**Why:** No production traffic to justify larger sizing at launch. All settings are reversible CDK config values — scale up when metrics show need.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `heediq-infra/`, `heediq-worker-transcription/`
+
+---
+
 ## Open / proposed (not yet locked)
 - **Exact pricing/packaging** — principle locked at D-011/D-019; revisit numbers against the post-D-004 cost basis.
 - **SAML/OIDC for enterprise IdPs** — explicitly deferred (D-020); revisit once an enterprise deal needs it.
