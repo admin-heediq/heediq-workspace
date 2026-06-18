@@ -1,20 +1,29 @@
 # WIP — heediq-infra CDK scaffold
 
 **Branch:** `chore/cdk-scaffold` in `heediq-infra`
-**Status:** Scaffold committed and verified. Next: implement actual stack resources.
+**Status:** Scaffold + SharedServicesStack done. PR #1 open. Next: FoundationStack.
 
 ## What was done
 
-CDK project scaffolded with all stack skeletons, config, and GitHub Actions workflow.
-- `pnpm typecheck` clean; `cdk synth` passes for all environments.
-- Branch `chore/cdk-scaffold` exists in heediq-infra. PR not yet opened.
+- CDK project scaffolded; `pnpm typecheck` clean; `cdk synth` passes for all environments.
+- PR #1 open: https://github.com/heediq/heediq-infra/pull/1
+- `SharedServicesStack` (eu-west-1) implemented: ECR repo, Route 53 zone, ACM cert eu-west-1.
+- `SharedServicesCfCertStack` (us-east-1) implemented: ACM cert for CloudFront.
+- `scripts/setup-budgets.sh` — run once with `heediq-management` SSO profile (D-056).
+
+**Post-deploy checklist for SharedServicesStack (before FoundationStack):**
+1. CDK bootstrap all accounts (see README)
+2. Create `GitHubActionsDeployRole` in each account
+3. Deploy shared-services via `workflow_dispatch` in CI (or manually)
+4. Capture `HostedZoneId`, `CertArnEuWest1`, `CertArnUsEast1` from CloudFormation outputs
+5. Update NS records at domain registrar (NameServers output) → ACM validation completes
+6. Fill `config.ts` → `SHARED_SERVICES` fields and commit
 
 ## What remains (implementation PRs, in order)
 
 Per D-050 (infra-first), these must land before any app repos deploy:
 
-1. **SharedServicesStack** — ECR repos, Route 53 hosted zone, ACM certs (us-east-1 + eu-west-1),
-   SSM param outputs. Deploy to shared-services account first.
+1. ~~**SharedServicesStack**~~ — done ✓
 
 2. **FoundationStack** — DynamoDB tables (heediq-recordings, heediq-orgs, heediq-users, heediq-jobs),
    S3 buckets (heediq-audio-uploads, heediq-web-assets), SQS queue (heediq-transcription),
