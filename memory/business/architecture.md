@@ -91,7 +91,7 @@ CloudWatch, Secrets Manager.
 - No issue tracker (Jira) for now — may adopt later. Branch/commit naming: `<type>/<short-kebab-desc>`. `develop` is the integration branch (D-027).
 - Two-track memory model (this repo): business memory (`memory/business/`) + codebase memory (`memory/codebase/`).
 - Documentation lives in code-level `README.md` files next to the code — replaces Confluence.
-- **Repos:** 7 polyrepos — workspace, shared, web, api, worker-transcription, worker-summarization, infra (D-035).
+- **Repos:** 7 polyrepos under `github.com/heediq/` — workspace, shared, web, api, worker-transcription, worker-summarization, infra (D-046).
 - **API:** REST + Hono on Lambda + `/api/v1/` prefix + `@heediq/shared` Zod schemas (D-033, D-034, D-042).
 - **Frontend:** Vite + React + TypeScript strict + Tailwind + Radix UI + TanStack Query (D-028, D-029).
 - **Test stack:** Vitest/RTL + DynamoDB Local/LocalStack + Playwright + k6 (D-030).
