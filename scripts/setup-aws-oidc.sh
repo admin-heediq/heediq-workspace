@@ -6,10 +6,22 @@ set -euo pipefail
 #
 # Creates GitHub Actions OIDC identity providers and IAM roles
 # in all four workload accounts. Idempotent — safe to re-run.
+# Always updates trust policies on existing roles.
+#
+# TRUST POLICY RULE
+# ─────────────────
+# sub MUST be: repo:heediq/<repo>:*  (StringLike, wildcard ref)
+# NOT:  repo:heediq/*:ref:refs/heads/develop  (wrong: branch-locked)
+# NOT:  repo:admin-heediq/*:...               (wrong: old org name)
+# Wildcard ref is required so PRs, feature branches, and main all work.
 #
 # Prerequisites:
 #   - AWS CLI installed and SSO configured (run setup-claude.sh first)
-#   - SSO session active: aws sso login --profile heediq-dev (etc.)
+#   - SSO sessions active — run before executing this script:
+#       aws sso login --profile heediq-shared
+#       aws sso login --profile heediq-dev
+#       aws sso login --profile heediq-staging
+#       aws sso login --profile heediq-prod
 #
 # Usage:
 #   bash claude-workspace/scripts/setup-aws-oidc.sh
@@ -18,8 +30,9 @@ set -euo pipefail
 # ---- config -------------------------------------------------
 
 GITHUB_ORG="heediq"
-REGION="eu-west-1"                     # D-044
-OIDC_URL="token.actions.githubusercontent.com"
+INFRA_REPO="heediq-infra"       # only infra repo assumes GitHubActionsDeployRole
+REGION="eu-west-1"              # D-044
+OIDC_HOST="token.actions.githubusercontent.com"
 OIDC_THUMBPRINT="6938fd4d98bab03faadb97b34396831e3780aea1"
 
 # Account IDs (D-045)
@@ -36,9 +49,23 @@ PROD_PROFILE="heediq-prod"
 
 # ---- helpers ------------------------------------------------
 
-create_oidc_provider() {
+verify_auth() {
+  local profile=$1 expected_account=$2
+  local actual
+  actual=$(aws sts get-caller-identity --profile "$profile" \
+    --query Account --output text 2>/dev/null) || {
+    echo "  [FAIL] Auth failed — run: aws sso login --profile ${profile}"
+    return 1
+  }
+  if [[ "$actual" != "$expected_account" ]]; then
+    echo "  [FAIL] Profile ${profile} authenticated to ${actual}, expected ${expected_account}"
+    return 1
+  fi
+}
+
+ensure_oidc_provider() {
   local profile=$1 account_id=$2
-  local arn="arn:aws:iam::${account_id}:oidc-provider/${OIDC_URL}"
+  local arn="arn:aws:iam::${account_id}:oidc-provider/${OIDC_HOST}"
 
   if aws iam get-open-id-connect-provider \
       --open-id-connect-provider-arn "$arn" \
@@ -46,7 +73,7 @@ create_oidc_provider() {
     echo "  [skip] OIDC provider already exists"
   else
     aws iam create-open-id-connect-provider \
-      --url "https://${OIDC_URL}" \
+      --url "https://${OIDC_HOST}" \
       --client-id-list sts.amazonaws.com \
       --thumbprint-list "$OIDC_THUMBPRINT" \
       --profile "$profile" >/dev/null
@@ -54,14 +81,11 @@ create_oidc_provider() {
   fi
 }
 
-create_deploy_role() {
-  local profile=$1 account_id=$2 branch=$3
+# Always updates trust policy — even if role already exists.
+# sub = repo:heediq/heediq-infra:*  (wildcard ref, specific repo)
+ensure_deploy_role() {
+  local profile=$1 account_id=$2
   local role="GitHubActionsDeployRole"
-
-  if aws iam get-role --role-name "$role" --profile "$profile" &>/dev/null; then
-    echo "  [skip] ${role} already exists"
-    return
-  fi
 
   local trust
   trust=$(cat <<EOF
@@ -70,40 +94,45 @@ create_deploy_role() {
   "Statement": [{
     "Effect": "Allow",
     "Principal": {
-      "Federated": "arn:aws:iam::${account_id}:oidc-provider/${OIDC_URL}"
+      "Federated": "arn:aws:iam::${account_id}:oidc-provider/${OIDC_HOST}"
     },
     "Action": "sts:AssumeRoleWithWebIdentity",
     "Condition": {
-      "StringEquals": { "${OIDC_URL}:aud": "sts.amazonaws.com" },
-      "StringLike":   { "${OIDC_URL}:sub": "repo:${GITHUB_ORG}/*:ref:refs/heads/${branch}" }
+      "StringEquals": { "${OIDC_HOST}:aud": "sts.amazonaws.com" },
+      "StringLike":   { "${OIDC_HOST}:sub": "repo:${GITHUB_ORG}/${INFRA_REPO}:*" }
     }
   }]
 }
 EOF
 )
 
-  aws iam create-role \
-    --role-name "$role" \
-    --assume-role-policy-document "$trust" \
-    --profile "$profile" >/dev/null
-
-  aws iam attach-role-policy \
-    --role-name "$role" \
-    --policy-arn arn:aws:iam::aws:policy/AdministratorAccess \
-    --profile "$profile"
-
-  echo "  [ok]   ${role} created (branch: ${branch})"
+  if aws iam get-role --role-name "$role" --profile "$profile" &>/dev/null; then
+    # Role exists — always update trust policy to ensure correct pattern
+    aws iam update-assume-role-policy \
+      --role-name "$role" \
+      --policy-document "$trust" \
+      --profile "$profile"
+    echo "  [ok]   ${role} trust policy updated → repo:${GITHUB_ORG}/${INFRA_REPO}:*"
+  else
+    aws iam create-role \
+      --role-name "$role" \
+      --assume-role-policy-document "$trust" \
+      --description "GitHub Actions CDK deploy — ${GITHUB_ORG}/${INFRA_REPO}" \
+      --profile "$profile" >/dev/null
+    aws iam attach-role-policy \
+      --role-name "$role" \
+      --policy-arn arn:aws:iam::aws:policy/AdministratorAccess \
+      --profile "$profile"
+    echo "  [ok]   ${role} created with AdministratorAccess"
+  fi
 }
 
-create_ecr_role() {
+# ECR push role in shared-services account.
+# sub = repo:heediq/*:*  (any heediq repo — worker repos push images)
+ensure_ecr_role() {
   local profile=$1 account_id=$2
   local role="GitHubActionsECRRole"
   local policy_name="HeediqECRPushPolicy"
-
-  if aws iam get-role --role-name "$role" --profile "$profile" &>/dev/null; then
-    echo "  [skip] ${role} already exists"
-    return
-  fi
 
   local trust
   trust=$(cat <<EOF
@@ -112,17 +141,12 @@ create_ecr_role() {
   "Statement": [{
     "Effect": "Allow",
     "Principal": {
-      "Federated": "arn:aws:iam::${account_id}:oidc-provider/${OIDC_URL}"
+      "Federated": "arn:aws:iam::${account_id}:oidc-provider/${OIDC_HOST}"
     },
     "Action": "sts:AssumeRoleWithWebIdentity",
     "Condition": {
-      "StringEquals": { "${OIDC_URL}:aud": "sts.amazonaws.com" },
-      "StringLike": {
-        "${OIDC_URL}:sub": [
-          "repo:${GITHUB_ORG}/*:ref:refs/heads/develop",
-          "repo:${GITHUB_ORG}/*:ref:refs/heads/main"
-        ]
-      }
+      "StringEquals": { "${OIDC_HOST}:aud": "sts.amazonaws.com" },
+      "StringLike":   { "${OIDC_HOST}:sub": "repo:${GITHUB_ORG}/*:*" }
     }
   }]
 }
@@ -149,7 +173,6 @@ EOF
         "ecr:UploadLayerPart",
         "ecr:CompleteLayerUpload",
         "ecr:PutImage",
-        "ecr:CreateRepository",
         "ecr:DescribeRepositories"
       ],
       "Resource": "arn:aws:ecr:${REGION}:${account_id}:repository/heediq-*"
@@ -159,48 +182,61 @@ EOF
 EOF
 )
 
-  aws iam create-role \
-    --role-name "$role" \
-    --assume-role-policy-document "$trust" \
-    --profile "$profile" >/dev/null
-
-  aws iam put-role-policy \
-    --role-name "$role" \
-    --policy-name "$policy_name" \
-    --policy-document "$ecr_policy" \
-    --profile "$profile"
-
-  echo "  [ok]   ${role} created (develop + main branches)"
+  if aws iam get-role --role-name "$role" --profile "$profile" &>/dev/null; then
+    aws iam update-assume-role-policy \
+      --role-name "$role" \
+      --policy-document "$trust" \
+      --profile "$profile"
+    echo "  [ok]   ${role} trust policy updated → repo:${GITHUB_ORG}/*:*"
+  else
+    aws iam create-role \
+      --role-name "$role" \
+      --assume-role-policy-document "$trust" \
+      --description "GitHub Actions ECR push — any heediq repo" \
+      --profile "$profile" >/dev/null
+    aws iam put-role-policy \
+      --role-name "$role" \
+      --policy-name "$policy_name" \
+      --policy-document "$ecr_policy" \
+      --profile "$profile"
+    echo "  [ok]   ${role} created with ECR push policy"
+  fi
 }
 
 # ---- main ---------------------------------------------------
 
 echo ""
 echo "=== Heediq AWS OIDC Setup ==="
+echo "    DeployRole sub: repo:${GITHUB_ORG}/${INFRA_REPO}:* (wildcard ref)"
 echo ""
 
-echo "1/4  shared (${SHARED_ACCOUNT})"
-create_oidc_provider "$SHARED_PROFILE" "$SHARED_ACCOUNT"
-create_ecr_role      "$SHARED_PROFILE" "$SHARED_ACCOUNT"
+echo "1/4  shared-services (${SHARED_ACCOUNT})"
+verify_auth "$SHARED_PROFILE" "$SHARED_ACCOUNT"
+ensure_oidc_provider "$SHARED_PROFILE" "$SHARED_ACCOUNT"
+ensure_ecr_role      "$SHARED_PROFILE" "$SHARED_ACCOUNT"
 
 echo ""
 echo "2/4  dev (${DEV_ACCOUNT})"
-create_oidc_provider "$DEV_PROFILE" "$DEV_ACCOUNT"
-create_deploy_role   "$DEV_PROFILE" "$DEV_ACCOUNT" "develop"
+verify_auth "$DEV_PROFILE" "$DEV_ACCOUNT"
+ensure_oidc_provider "$DEV_PROFILE" "$DEV_ACCOUNT"
+ensure_deploy_role   "$DEV_PROFILE" "$DEV_ACCOUNT"
 
 echo ""
 echo "3/4  staging (${STAGING_ACCOUNT})"
-create_oidc_provider "$STAGING_PROFILE" "$STAGING_ACCOUNT"
-create_deploy_role   "$STAGING_PROFILE" "$STAGING_ACCOUNT" "main"
+verify_auth "$STAGING_PROFILE" "$STAGING_ACCOUNT"
+ensure_oidc_provider "$STAGING_PROFILE" "$STAGING_ACCOUNT"
+ensure_deploy_role   "$STAGING_PROFILE" "$STAGING_ACCOUNT"
 
 echo ""
 echo "4/4  prod (${PROD_ACCOUNT})"
-create_oidc_provider "$PROD_PROFILE" "$PROD_ACCOUNT"
-create_deploy_role   "$PROD_PROFILE" "$PROD_ACCOUNT" "main"
+verify_auth "$PROD_PROFILE" "$PROD_ACCOUNT"
+ensure_oidc_provider "$PROD_PROFILE" "$PROD_ACCOUNT"
+ensure_deploy_role   "$PROD_PROFILE" "$PROD_ACCOUNT"
 
 echo ""
-echo "=== Done. Add these to GitHub org → Settings → Variables (not Secrets): ==="
+echo "=== Done. ==="
 echo ""
+echo "GitHub Actions env vars (set at org or repo level — Variables, not Secrets):"
 echo "  AWS_REGION              = ${REGION}"
 echo "  AWS_ECR_ROLE            = arn:aws:iam::${SHARED_ACCOUNT}:role/GitHubActionsECRRole"
 echo "  AWS_DEPLOY_ROLE_DEV     = arn:aws:iam::${DEV_ACCOUNT}:role/GitHubActionsDeployRole"
