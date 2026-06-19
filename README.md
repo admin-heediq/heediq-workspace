@@ -66,33 +66,36 @@ Install before running setup:
 
 ---
 
-## After setup — AWS configuration
+## After setup — AWS access
 
-Configure AWS SSO profiles (required for infra work):
+### All developers
+
+Configure an SSO profile for the dev account (the account you'll deploy to and debug in):
 
 ```bash
-# One-time SSO configuration per profile
-aws configure sso --profile heediq-shared   # shared-services account
+aws configure sso --profile heediq-dev
+# SSO start URL → get from Andrii (IAM Identity Center, management account)
+# SSO region    → eu-west-1
+# Default region → eu-west-1
+
+# Login before each session that needs AWS access
+aws sso login --profile heediq-dev
+```
+
+Your IAM Identity Center permission set determines what you can do — ask Andrii if you need access to additional accounts (staging, shared-services, prod).
+
+### Infra owners only
+
+Owners who manage infrastructure across all accounts need profiles for all four workload accounts:
+
+```bash
+aws configure sso --profile heediq-shared
 aws configure sso --profile heediq-dev
 aws configure sso --profile heediq-staging
 aws configure sso --profile heediq-prod
-
-# Login before each session where you need AWS access
-aws sso login --profile heediq-shared
-aws sso login --profile heediq-dev
-# etc.
 ```
 
-Use the IAM Identity Center start URL from the management account console.
-
-Then run the one-time AWS infrastructure setup (CDK bootstrap + OIDC roles):
-
-```bash
-cd ~/dev/heediq/heediq-infra
-bash scripts/setup.sh
-```
-
-See `heediq-infra/README.md` for the full initial setup sequence (shared-services deploy, NS records, etc.).
+`heediq-infra/scripts/setup.sh` (CDK bootstrap + OIDC roles) is a one-time operation run when setting up a fresh AWS org. **Do not run it** on a standard machine setup — it's already been run and is idempotent but touches IAM across all accounts. See `heediq-infra/README.md` for details.
 
 ---
 
