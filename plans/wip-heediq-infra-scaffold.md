@@ -5,7 +5,7 @@
 
 ## What is done
 
-- PRs #1–6 merged to develop and deployed.
+- PRs #1–8 merged to develop and deployed.
 - `SharedServicesStack` (eu-west-1): ECR repo, Route 53 hosted zone, ACM cert, Zoho email DNS records (MX/SPF/DMARC/DKIM). **Deployed and CREATE_COMPLETE.**
 - `SharedServicesCfCertStack` (us-east-1): ACM wildcard cert for CloudFront. **Deployed and CREATE_COMPLETE.**
 - NS records updated at domain registrar → certs validated.
