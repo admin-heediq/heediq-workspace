@@ -4,13 +4,6 @@ Canonical, append-only record of locked decisions — the business-memory source
 format per `rules/09-decisions.md`. Read this at the start of every chat; locked decisions are
 constraints.
 
-> **Migration complete (2026-06-16):** the entries below were migrated from the original chat
-> history verbatim (not reconstructed from a memory summary). Detailed text — SVG coordinates,
-> exact cost figures, full brand story, etc. — now lives in `branding.md`, `product.md`, and
-> `architecture.md` in this folder; entries here stay lean and link out per `rules/09-decisions.md`.
-> Worth a quick skim against the source before treating these as final, since they were assembled
-> from several past conversations rather than confirmed fresh in this one.
-
 ---
 
 ## Architecture & Infrastructure
@@ -395,7 +388,7 @@ Machine access (GitHub Actions) via OIDC: a `GitHubActionsDeployRole` IAM role i
 Management account has no local profile (used only for org/billing via SSO console).
 **Why:** Canonical reference for scripts, CDK, and disaster recovery. Account boundary = environment boundary per D-036/D-037.
 **Supersedes:** — **Superseded by:** —
-**Related code:** `claude-workspace/scripts/setup-aws-oidc.sh`, `heediq-infra/`
+**Related code:** `heediq-infra/scripts/setup.sh`, `heediq-infra/`
 
 ---
 
@@ -485,6 +478,13 @@ DNS validation via Route 53 (D-051). No per-subdomain certs unless a specific re
 **Why:** No production traffic to justify larger sizing at launch. All settings are reversible CDK config values — scale up when metrics show need.
 **Supersedes:** — **Superseded by:** —
 **Related code:** `heediq-infra/`, `heediq-worker-transcription/`
+
+### D-057 · Business email — Zoho EU (2026-06-19) — Locked
+**Area:** Infra
+**Decision:** Team email (`@heediq.com` inboxes) hosted on Zoho Mail EU datacenter. DNS records (MX, SPF, DMARC, DKIM) managed in `SharedServicesStack` as Route 53 record constructs — version-controlled, deployed via CI.
+**Why:** Separate from SES transactional email (D-054); Zoho EU keeps data in EU. Managing DNS in CDK means records survive hosted zone recreation and are auditable in git.
+**Supersedes:** — **Superseded by:** —
+**Related code:** `heediq-infra/lib/shared-services/shared-services-stack.ts`
 
 ### D-056 · Dev account budgets — $50/month via management account CLI script (2026-06-18) — Locked
 **Area:** Infra / Cost
