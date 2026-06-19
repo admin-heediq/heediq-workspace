@@ -461,8 +461,18 @@ DNS validation via Route 53 (D-051). No per-subdomain certs unless a specific re
 **Area:** Architecture / Infra
 **Decision:** Amazon SES in `eu-west-1` for all transactional email (auth flows, notifications). Domain verified on `heediq.com`; sending address `noreply@heediq.com`. DKIM, SPF, and DMARC configured at domain verification. SES sandbox exit requested before launch.
 **Why:** Native AWS service — same account/region as the rest of the stack, CDK-manageable, cheapest at scale ($0.10/1000 emails). Third-party providers (Resend, Postmark) rejected to avoid an extra vendor dependency given existing AWS commitment.
-**Supersedes:** — **Superseded by:** —
+**Supersedes:** — **Superseded by:** D-058
 **Related code:** `heediq-infra/`
+
+---
+
+### D-058 · SES identity in shared-services account; cross-account role for workload sending (2026-06-19) — Locked
+**Area:** Architecture / Infra
+**Decision:** The `heediq.com` SES email identity lives in the shared-services account (alongside Route 53). DKIM CNAME records are created in the same CDK stack with no cross-stack dependency. Workload account Lambdas send email by assuming IAM role `heediq-ses-email-sending` (in shared-services account). Role ARN exported to workload accounts via SSM at `/heediq/api/ses-sending-role-arn`.
+**Why:** Avoids SharedServicesStack depending on FoundationStack outputs (reverse dependency). SES identity and its DNS records are self-contained in the one account that owns Route 53 — simpler, no two-step deploy dance. Cross-account role assumption is standard IAM; no SES-specific policy quirks.
+**Supersedes:** D-054 (extends — D-054's choice of SES still stands; this locks the placement)
+**Superseded by:** —
+**Related code:** `heediq-infra/lib/shared-services/shared-services-stack.ts`, `heediq-infra/lib/foundation/foundation-stack.ts`
 
 ---
 
