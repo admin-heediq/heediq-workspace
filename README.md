@@ -18,7 +18,6 @@ Install before running setup:
 | Node.js | 22 LTS | https://nodejs.org |
 | pnpm | latest | `npm install -g pnpm` |
 | GitHub CLI (`gh`) | latest | https://cli.github.com/ |
-| Claude Code | latest | `npm install -g @anthropic-ai/claude-code` |
 
 SSH for GitHub is checked automatically in step 2 — the script guides you if it's not set up.
 
@@ -34,9 +33,6 @@ bash claude-workspace/scripts/clone-repos.sh
 
 # 3. Set up the Claude workspace (writes CLAUDE.md, configures .claude/)
 bash claude-workspace/scripts/setup-workspace.sh
-
-# 4. Start Claude from the workspace root
-cd ~/dev/heediq && claude
 ```
 
 ### Windows (PowerShell)
@@ -46,7 +42,6 @@ mkdir ~/dev/heediq; cd ~/dev/heediq
 git clone git@github.com:heediq/claude-workspace.git
 pwsh claude-workspace\scripts\clone-repos.ps1
 pwsh claude-workspace\scripts\setup-workspace.ps1
-cd ~/dev/heediq; claude
 ```
 
 ### SSH alias (optional — multiple GitHub accounts)
@@ -77,17 +72,6 @@ pwsh claude-workspace\scripts\setup-claude.ps1   # Windows
 
 This overwrites `settings.json` from the template but never touches your personal
 `settings.local.json`.
-
----
-
-## Always launch Claude from the workspace root
-
-```bash
-cd ~/dev/heediq   # the directory that contains claude-workspace/
-claude
-```
-
-Starting from inside a sub-repo skips the workspace `CLAUDE.md` and the shared rules won't load.
 
 ---
 

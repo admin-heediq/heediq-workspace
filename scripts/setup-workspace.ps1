@@ -83,6 +83,6 @@ if ($LASTEXITCODE -eq 0) {
 Write-Host ""
 Write-Host "=== Done ==="
 Write-Host ""
-Write-Host "Start Claude from the workspace root:"
-Write-Host "  cd '$WorkspaceRoot'; claude"
+Write-Host "Open Claude Code (VS Code extension or desktop app) pointed at:"
+Write-Host "  $WorkspaceRoot"
 Write-Host ""

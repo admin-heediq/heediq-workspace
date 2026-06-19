@@ -80,6 +80,6 @@ fi
 echo ""
 echo "=== Done ==="
 echo ""
-echo "Start Claude from the workspace root:"
-echo "  cd $WORKSPACE_ROOT && claude"
+echo "Open Claude Code (VS Code extension or desktop app) pointed at:"
+echo "  $WORKSPACE_ROOT"
 echo ""
