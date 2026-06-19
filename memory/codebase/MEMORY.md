@@ -14,7 +14,7 @@ duplicate their content. See `rules/08-memory.md` for the contract.
 ## Modules / Features (pointers)
 
 - **heediq-infra** — CDK TypeScript project; all stacks for all accounts.
-  README: `../../heediq-infra/README.md` · Decisions: D-036, D-037, D-038, D-044, D-045, D-051–D-057
+  README: `../../heediq-infra/README.md` · Decisions: D-036, D-037, D-038, D-044, D-045, D-051–D-058
 
 <!--
 - **<feature/area>** — <one-line summary>.
