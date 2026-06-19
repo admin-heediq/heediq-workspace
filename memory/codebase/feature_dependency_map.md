@@ -17,6 +17,7 @@ Drives "what to retest" (Step 2) and PR blast-radius notes. One entry per featur
 - **Downstream**: all app repos — they deploy code on top of infra resources; all SSM params from FoundationStack must exist before app deploys succeed; `GitHubActionsECRRole` in shared-services account is used by all app repos to push Docker images
 - **Shared surfaces**:
   - `lib/config.ts` — account IDs, regions, domains, compute sizing; any change ripples to all stacks
+  - `scripts/setup-aws-profiles.sh` — configures AWS SSO profiles for all 4 accounts; owner-only, run once per new machine
   - `scripts/setup.sh` — one-time AWS setup (CDK bootstrap + OIDC providers + IAM roles); upstream for all repos' CI. Must be re-run if org is renamed or trust policy drifts.
   - `scripts/setup-budgets.sh` — creates AWS Budgets via management account
 
