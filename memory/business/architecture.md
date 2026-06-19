@@ -13,7 +13,7 @@ Cognito, CloudFront, Route 53, Secrets Manager, CloudWatch.
 ## Environments
 Five AWS accounts under one AWS Organization (D-036):
 - **Management** — org root, IAM Identity Center (SSO), consolidated billing. No workloads.
-- **Shared services** — ECR (all container images) and future cross-environment shared infrastructure.
+- **Shared services** — ECR (all container images), Route 53 hosted zone (heediq.com), ACM wildcard certs (eu-west-1 + us-east-1), SES email identity + DKIM records, cross-account email sending IAM role, Zoho DNS records. All DNS lives here alongside ECR (D-051–D-058).
 - **Dev / Staging / Prod** — fully isolated workload accounts (DynamoDB, Lambda, S3, SQS, Cognito, etc.).
 
 Human access via IAM Identity Center (SSO) — one login URL, permission sets defined centrally, users assume roles per account. No IAM users or long-lived access keys.
