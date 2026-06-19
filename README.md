@@ -8,49 +8,6 @@ workspace root.
 
 ## New machine setup
 
-Three commands to go from a blank machine to a working Heediq workspace:
-
-```bash
-# 1. Create workspace directory and clone claude-workspace into it
-mkdir ~/dev/heediq && cd ~/dev/heediq
-git clone git@github.com:heediq/claude-workspace.git   # adjust path as needed
-
-# 2. Run the machine setup script — clones all repos, writes CLAUDE.md, configures .claude/
-bash claude-workspace/scripts/setup-machine.sh
-
-# 3. Start Claude from the workspace root
-cd ~/dev/heediq && claude
-```
-
-**Windows (PowerShell):**
-
-```powershell
-mkdir ~/dev/heediq; cd ~/dev/heediq
-git clone git@github.com:heediq/claude-workspace.git
-pwsh claude-workspace\scripts\setup-machine.ps1
-cd ~/dev/heediq; claude
-```
-
-The setup script:
-- Clones all Heediq repos that exist on GitHub (skips ones not yet scaffolded)
-- Writes the workspace-root `CLAUDE.md` that loads these rules into Claude
-- Configures `.claude/settings.json` (team) and `.claude/settings.local.json` (personal)
-
-### SSH alias (optional)
-
-If you manage multiple GitHub accounts and need a separate SSH key for the `heediq` org,
-add this to `~/.ssh/config` before running setup:
-
-```
-Host github-heediq
-  HostName github.com
-  User git
-  IdentityFile ~/.ssh/id_ed25519_heediq   # your heediq-org SSH key
-```
-
-The setup script detects the alias automatically and uses it for cloning. Without it, standard
-`git@github.com` is used. Pass `--https` to either script to use HTTPS instead.
-
 ### Prerequisites
 
 Install before running setup:
@@ -60,55 +17,66 @@ Install before running setup:
 | git | latest | system package manager or https://git-scm.com |
 | Node.js | 22 LTS | https://nodejs.org |
 | pnpm | latest | `npm install -g pnpm` |
-| AWS CLI | v2 | https://aws.amazon.com/cli/ |
-| GitHub CLI | latest | https://cli.github.com/ |
+| GitHub CLI (`gh`) | latest | https://cli.github.com/ |
 | Claude Code | latest | `npm install -g @anthropic-ai/claude-code` |
 
----
+SSH for GitHub is checked automatically in step 2 — the script guides you if it's not set up.
 
-## After setup — AWS access
-
-### All developers
-
-Configure an SSO profile for the dev account (the account you'll deploy to and debug in):
+### macOS / Linux
 
 ```bash
-aws configure sso --profile heediq-dev
-# SSO start URL → get from Andrii (IAM Identity Center, management account)
-# SSO region    → eu-west-1
-# Default region → eu-west-1
+# 1. Create workspace directory and clone claude-workspace into it
+mkdir ~/dev/heediq && cd ~/dev/heediq
+git clone git@github.com:heediq/claude-workspace.git
 
-# Login before each session that needs AWS access
-aws sso login --profile heediq-dev
+# 2. Clone all repos (checks SSH, guides setup if missing)
+bash claude-workspace/scripts/clone-repos.sh
+
+# 3. Set up the Claude workspace (writes CLAUDE.md, configures .claude/)
+bash claude-workspace/scripts/setup-workspace.sh
+
+# 4. Start Claude from the workspace root
+cd ~/dev/heediq && claude
 ```
 
-Your IAM Identity Center permission set determines what you can do — ask Andrii if you need access to additional accounts (staging, shared-services, prod).
+### Windows (PowerShell)
 
-### Infra owners only
-
-Owners who manage infrastructure across all accounts need profiles for all four workload accounts:
-
-```bash
-aws configure sso --profile heediq-shared
-aws configure sso --profile heediq-dev
-aws configure sso --profile heediq-staging
-aws configure sso --profile heediq-prod
+```powershell
+mkdir ~/dev/heediq; cd ~/dev/heediq
+git clone git@github.com:heediq/claude-workspace.git
+pwsh claude-workspace\scripts\clone-repos.ps1
+pwsh claude-workspace\scripts\setup-workspace.ps1
+cd ~/dev/heediq; claude
 ```
 
-**Infrastructure provisioning** (CDK bootstrap, OIDC roles, shared-services deploy, DNS setup) is a separate concern from local machine setup — it's already done for this org and lives entirely in `heediq-infra/README.md → Initial Setup`. Do not run `heediq-infra/scripts/setup.sh` as part of machine setup; it is an owner-only re-provisioning tool for disaster recovery or a fresh AWS org.
+### SSH alias (optional — multiple GitHub accounts)
+
+If you use a separate SSH key for the `heediq` org (e.g. you have a personal GitHub account too),
+add this to `~/.ssh/config` **before** running `clone-repos.sh`:
+
+```
+Host github-heediq
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/id_ed25519_heediq
+```
+
+`clone-repos.sh` detects the alias automatically and uses it for all clones. Without it, standard
+`git@github.com` is used. Pass `--https` / `-Https` to use HTTPS instead.
 
 ---
 
 ## Day-to-day: updating Claude settings
 
-Re-run `setup-claude.sh` whenever `scripts/settings.json.tpl` changes (team settings update):
+Re-run `setup-claude.sh` whenever `scripts/settings.json.tpl` changes:
 
 ```bash
 bash claude-workspace/scripts/setup-claude.sh    # macOS/Linux
 pwsh claude-workspace\scripts\setup-claude.ps1   # Windows
 ```
 
-This overwrites `settings.json` from the template but never touches your personal `settings.local.json`.
+This overwrites `settings.json` from the template but never touches your personal
+`settings.local.json`.
 
 ---
 
@@ -120,6 +88,24 @@ claude
 ```
 
 Starting from inside a sub-repo skips the workspace `CLAUDE.md` and the shared rules won't load.
+
+---
+
+## AWS access
+
+Regular developers **do not need AWS CLI configured** — local development uses DynamoDB Local /
+LocalStack (D-030), and all cloud deployments go through CI via OIDC (no stored credentials).
+
+If you need to inspect deployed resources (CloudWatch logs, etc.), ask Andrii for an IAM Identity
+Center permission set for `heediq-dev`, then run:
+
+```bash
+aws configure sso --profile heediq-dev
+aws sso login --profile heediq-dev
+```
+
+Infrastructure provisioning (CDK bootstrap, OIDC roles, SSO profiles for all accounts) is
+owner-only and documented in `heediq-infra/README.md`.
 
 ---
 
@@ -150,9 +136,11 @@ claude-workspace/
   plans/
     wip-*.md                    ← one WIP file per in-flight branch
   scripts/
-    setup-machine.sh            ← NEW MACHINE: clone repos + write CLAUDE.md + configure .claude/
-    setup-machine.ps1           ← same for Windows PowerShell
+    clone-repos.sh              ← SSH check + clone all repos into workspace root
+    clone-repos.ps1             ← Windows
+    setup-workspace.sh          ← write CLAUDE.md + configure .claude/ settings
+    setup-workspace.ps1         ← Windows
     setup-claude.sh             ← configure .claude/ only (re-run to pick up settings changes)
-    setup-claude.ps1            ← same for Windows PowerShell
+    setup-claude.ps1            ← Windows
     settings.json.tpl           ← team settings template (substituted by setup scripts)
 ```
