@@ -95,7 +95,7 @@ aws configure sso --profile heediq-staging
 aws configure sso --profile heediq-prod
 ```
 
-`heediq-infra/scripts/setup.sh` (CDK bootstrap + OIDC roles) is a one-time operation run when setting up a fresh AWS org. **Do not run it** on a standard machine setup — it's already been run and is idempotent but touches IAM across all accounts. See `heediq-infra/README.md` for details.
+**Infrastructure provisioning** (CDK bootstrap, OIDC roles, shared-services deploy, DNS setup) is a separate concern from local machine setup — it's already done for this org and lives entirely in `heediq-infra/README.md → Initial Setup`. Do not run `heediq-infra/scripts/setup.sh` as part of machine setup; it is an owner-only re-provisioning tool for disaster recovery or a fresh AWS org.
 
 ---
 
