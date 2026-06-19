@@ -1,20 +1,24 @@
 # WIP — heediq-infra CDK scaffold
 
 **Branch:** `chore/cdk-scaffold` in `heediq-infra`
-**Status:** Scaffold + SharedServicesStack done. PR #1 open. Next: FoundationStack.
+**Status:** PR #1 merged (scaffold + budgets). PR #2 open (SharedServicesStack). Next: FoundationStack.
 
 ## What was done
 
 - CDK project scaffolded; `pnpm typecheck` clean; `cdk synth` passes for all environments.
-- PR #1 open: https://github.com/heediq/heediq-infra/pull/1
-- `SharedServicesStack` (eu-west-1) implemented: ECR repo, Route 53 zone, ACM cert eu-west-1.
-- `SharedServicesCfCertStack` (us-east-1) implemented: ACM cert for CloudFront.
-- `scripts/setup-budgets.sh` — run once with `heediq-management` SSO profile (D-056).
+- PR #1 merged: scaffold + budget script (D-056).
+- PR #2 open: https://github.com/heediq/heediq-infra/pull/2
+  - `SharedServicesStack` (eu-west-1): ECR repo, Route 53 zone, ACM cert eu-west-1.
+  - `SharedServicesCfCertStack` (us-east-1): ACM cert for CloudFront.
+  - README: OIDC trust policy gotcha documented.
+- OIDC trust policies fixed on all 4 accounts via `setup-aws-oidc.sh`:
+  - `GitHubActionsDeployRole` sub: `repo:heediq/heediq-infra:*` (wildcard ref — was branch-locked to old org)
+  - `GitHubActionsECRRole` sub: `repo:heediq/*:*`
 
 **Post-deploy checklist for SharedServicesStack (before FoundationStack):**
-1. CDK bootstrap all accounts (see README)
-2. Create `GitHubActionsDeployRole` in each account
-3. Deploy shared-services via `workflow_dispatch` in CI (or manually)
+1. ✅ CDK bootstrap all accounts (done per user)
+2. ✅ `GitHubActionsDeployRole` in each account (done; trust policies corrected this session)
+3. Deploy shared-services via `workflow_dispatch` in CI
 4. Capture `HostedZoneId`, `CertArnEuWest1`, `CertArnUsEast1` from CloudFormation outputs
 5. Update NS records at domain registrar (NameServers output) → ACM validation completes
 6. Fill `config.ts` → `SHARED_SERVICES` fields and commit
@@ -23,7 +27,7 @@
 
 Per D-050 (infra-first), these must land before any app repos deploy:
 
-1. ~~**SharedServicesStack**~~ — done ✓
+1. ~~**SharedServicesStack**~~ — done ✓ (PR #2)
 
 2. **FoundationStack** — DynamoDB tables (heediq-recordings, heediq-orgs, heediq-users, heediq-jobs),
    S3 buckets (heediq-audio-uploads, heediq-web-assets), SQS queue (heediq-transcription),
@@ -40,6 +44,7 @@ Per D-050 (infra-first), these must land before any app repos deploy:
 
 ## Notes
 - Shared-services stack is deployed via `workflow_dispatch` not the normal push pipeline.
-- CDK bootstrap needed in all 5 accounts before first deploy (see README).
+- App repos (heediq-api, heediq-web, heediq-worker-transcription) will each get their own
+  narrow IAM deploy role added to `setup-aws-oidc.sh` when those repos are scaffolded.
 - Cross-account Route 53 record creation (workload → shared-services hosted zone) needs IAM
   cross-account grants on the hosted zone — easiest to set in SharedServicesStack.
