@@ -16,7 +16,7 @@ Drives "what to retest" (Step 2) and PR blast-radius notes. One entry per featur
 - **Upstream**: AWS accounts (D-045), GitHub org `heediq` (D-046)
 - **Downstream**: every repo's CI pipeline — `setup-aws-oidc.sh` must be run before any repo can assume an OIDC role and deploy; `setup-budgets.sh` (also here) must be run before dev cost alerts work
 - **Shared surfaces**:
-  - `scripts/setup-aws-oidc.sh` — creates `GitHubActionsDeployRole` (all 4 accounts, trusts `heediq/heediq-infra:*`) and `GitHubActionsECRRole` (shared-services only, trusts `heediq/*:*`). Idempotent. Must be re-run if org is renamed or trust policy drifts.
+  - `scripts/setup-aws-oidc.sh` — creates `GitHubActionsDeployRole` (all 4 accounts, trusts `heediq/heediq-infra:*`) and `GitHubActionsECRRole` (shared-services only, trusts `heediq/*:*`). Originally only created ECR role in shared-services; deploy role for shared-services was added later (needed for heediq-infra CI to deploy SharedServicesStack). Idempotent. Must be re-run if org is renamed or trust policy drifts.
   - `scripts/setup-budgets.sh` — creates AWS Budgets in the management account for the dev account
 
 ### Infrastructure (heediq-infra)

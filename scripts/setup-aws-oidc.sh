@@ -214,6 +214,7 @@ echo "1/4  shared-services (${SHARED_ACCOUNT})"
 verify_auth "$SHARED_PROFILE" "$SHARED_ACCOUNT"
 ensure_oidc_provider "$SHARED_PROFILE" "$SHARED_ACCOUNT"
 ensure_ecr_role      "$SHARED_PROFILE" "$SHARED_ACCOUNT"
+ensure_deploy_role   "$SHARED_PROFILE" "$SHARED_ACCOUNT"   # needed for heediq-infra CI to deploy SharedServicesStack
 
 echo ""
 echo "2/4  dev (${DEV_ACCOUNT})"
