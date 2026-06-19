@@ -17,6 +17,7 @@ Install before running setup:
 | git | latest | system package manager or https://git-scm.com |
 | Node.js | 22 LTS | https://nodejs.org |
 | pnpm | latest | `npm install -g pnpm` |
+| AWS CLI | v2 | https://aws.amazon.com/cli/ |
 | GitHub CLI (`gh`) | latest | https://cli.github.com/ |
 
 SSH for GitHub is checked automatically in step 2 — the script guides you if it's not set up.
