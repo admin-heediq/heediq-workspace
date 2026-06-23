@@ -34,6 +34,7 @@ manual approval gate before production.
 AWS Transcribe dropped entirely.
 **Why:** ~70–75× cheaper than AWS Transcribe at scale (~$6/mo vs ~$432/mo at 10 meetings/day);
 makes a usage-inclusive pricing model viable at all.
+**Superseded by:** D-059 (compute only — self-hosted faster-whisper and SQS remain)
 **Related:** `memory/business/architecture.md`
 
 ### D-005 · Transcription tiers — Locked (2026-06-11)
@@ -41,6 +42,7 @@ makes a usage-inclusive pricing model viable at all.
 **Decision:** Free tier = whisper `small` on CPU (~$0.02/60-min meeting, capped 30–45 min/recording);
 paid tier = whisper `large-v3` + pyannote diarization with chunked parallel processing
 (~$0.12/60-min meeting).
+**Superseded by:** D-059 (compute: Fargate CPU → EC2 GPU, cost numbers revised), D-060 (mechanism: tier routing → API access control; model assignments unchanged)
 **Related:** `memory/business/architecture.md`
 
 ### D-006 · Transcription cost optimizations — Locked (2026-06-11)
@@ -79,6 +81,7 @@ EventBridge Pipes triggers an ECS Fargate Spot `RunTask` (faster-whisper, per D-
 idle cost. Job status is written to DynamoDB; client polls for completion.
 **Supersedes:** an earlier S3-event → Lambda → AWS-Transcribe-job orchestration (dropped
 alongside D-004).
+**Superseded by:** D-059 (Fargate Spot RunTask → EC2 GPU RunTask; upload/SQS/EventBridge flow unchanged), D-061 (client polling → WebSocket push)
 **Related:** `memory/business/architecture.md`
 
 ---
@@ -486,7 +489,7 @@ DNS validation via Route 53 (D-051). No per-subdomain certs unless a specific re
 - **DynamoDB**: `PAY_PER_REQUEST` (on-demand) in all environments — no baseline cost, auto-scales, right for zero-to-low traffic
 - **CloudFront price class**: `PriceClass_100` (US + EU edge locations) — fits EU SaaS target market; ~40% cheaper than all-regions
 **Why:** No production traffic to justify larger sizing at launch. All settings are reversible CDK config values — scale up when metrics show need.
-**Supersedes:** — **Superseded by:** —
+**Supersedes:** — **Superseded by:** D-059 (transcription Fargate lines only; Lambda/DynamoDB/CloudFront sizing unchanged)
 **Related code:** `heediq-infra/`, `heediq-worker-transcription/`
 
 ### D-057 · Business email — Zoho EU (2026-06-19) — Locked
@@ -505,6 +508,32 @@ DNS validation via Route 53 (D-051). No per-subdomain certs unless a specific re
 
 ---
 
+### D-059 · EC2 GPU Spot compute for transcription (2026-06-23) — Locked
+**Area:** Infra / Cost
+**Decision:** Both transcription model variants (whisper small and large-v3+pyannote) run on EC2 Spot using g4dn.xlarge (T4, 16 GB VRAM, 4 vCPU, 16 GB RAM, ~$0.13–0.16/hr Spot in eu-west-1). Single instance type, single ASG (min=0, capacity-optimized), single ECS cluster — no separate pools per model. Fargate Spot task definitions and FARGATE_SPOT capacity provider replaced by an EC2 capacity provider backed by an Auto Scaling Group. Zero idle cost preserved (ASG scales to zero when queue empty). Cold start ~45–90s accepted for async batch. Spot interruption: worker catches SIGTERM, writes `status=retrying` to heediq-jobs, lets SQS visibility timeout expire and re-enqueue. AMI: AWS ECS-optimized GPU AMI (Docker + ECS agent + nvidia-container-toolkit pre-configured). g4dn.xlarge is the smallest CUDA GPU instance on AWS — no smaller option exists.
+**Why:** 10× faster transcription (1–2 min whisper small, 3–5 min large-v3 vs 15–20/30–60 min on Fargate CPU). Per-meeting cost drops ~50%+: whisper small ~$0.003, large-v3 ~$0.010 per 60-min meeting (vs ~$0.006/$0.035 on Fargate CPU Spot). Single pool simplifies infra; free/paid job mixing causes no contention at MVP volumes.
+**Supersedes:** D-004 (Fargate Spot → EC2 GPU Spot; self-hosted faster-whisper and SQS unchanged), D-055 (transcription Fargate sizing lines only; Lambda/DynamoDB/CloudFront unchanged)
+**Superseded by:** —
+**Related code:** `heediq-infra/lib/transcription/transcription-stack.ts`, `heediq-infra/lib/config.ts`
+
+### D-060 · Model access control at API layer, not infra routing (2026-06-23) — Locked
+**Area:** Product / Architecture
+**Decision:** Which model runs for a job is enforced at the API enqueue endpoint, not via separate compute pools or task definitions. Free users may only submit whisper small jobs; the API rejects requests specifying large-v3. Paid users may choose large-v3 + speaker identification (pyannote diarization) at job submission. Same ECS cluster and task definition pool serves all jobs; the TIER env var in the container controls which model loads. Chunked parallel processing for the paid tier (a CPU-era latency optimisation from D-005) is dropped — unnecessary at GPU speeds (3–5 min total).
+**Why:** Access control belongs at the API boundary, not baked into infra routing. Single pool is simpler to operate at MVP scale. Decoupling access from infra means adding a third model variant requires only API logic changes, no infra change.
+**Supersedes:** D-005 (mechanism: CPU routing → API access control; model assignments free=small / paid=large-v3+pyannote unchanged)
+**Superseded by:** —
+**Related code:** `heediq-api/` (job enqueue endpoint), `heediq-infra/lib/transcription/transcription-stack.ts`
+
+### D-061 · Real-time job status via API Gateway WebSocket (2026-06-23) — Locked
+**Area:** Architecture / Product
+**Decision:** Job status is pushed to the client via API Gateway WebSocket, not polling. A new `HeediqWebSocketStack` owns: WebSocket API Gateway, connection management Lambda ($connect/$disconnect), and Status Pusher Lambda (triggered by DDB Streams on `heediq-jobs`, pushes to active connections). A new `heediq-ws-connections` DynamoDB table (in FoundationStack) stores active connection IDs keyed by connectionId with a GSI on recordingId. Workers write status stages to `heediq-jobs`; the pusher Lambda propagates each change to connected clients. Status stages: `queued → starting → transcribing → diarizing (large-v3 only) → summarizing → done / failed`. `starting` is written by the worker as its first DynamoDB update after receiving the SQS message (before model load) — making EC2 cold-start latency visible as "Transcription server starting…". New subdomains: `ws.heediq.com` / `ws-staging.heediq.com` / `ws-dev.heediq.com` — covered by existing `*.heediq.com` wildcard cert (D-053). The upload flow (S3 presigned URL), SQS queue, EventBridge Pipes → ECS RunTask, and DynamoDB job status writes all remain unchanged from D-023.
+**Why:** Real-time status transparency is a product quality differentiator for a product users actively wait on. DDB Streams → pusher Lambda is the standard serverless WebSocket fan-out pattern — no always-on process. `starting` surfacing EC2 cold start is uniquely honest and trust-building UX.
+**Supersedes:** D-023 (client polling → WebSocket push; upload/SQS/EventBridge/ECS flow unchanged)
+**Superseded by:** —
+**Related code:** `heediq-infra/lib/websocket/websocket-stack.ts` (new), `heediq-infra/lib/foundation/foundation-stack.ts`
+
+---
+
 ## Open / proposed (not yet locked)
-- **Exact pricing/packaging** — principle locked at D-011/D-019; revisit numbers against the post-D-004 cost basis.
+- **Exact pricing/packaging** — principle locked at D-011/D-019; revisit numbers against the post-D-059 cost basis (GPU compute: ~$0.003/free job, ~$0.010/paid job).
 - **SAML/OIDC for enterprise IdPs** — explicitly deferred (D-020); revisit once an enterprise deal needs it.
