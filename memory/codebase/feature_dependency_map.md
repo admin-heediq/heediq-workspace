@@ -21,14 +21,14 @@ Drives "what to retest" (Step 2) and PR blast-radius notes. One entry per featur
   - `scripts/setup.sh` — one-time AWS setup (CDK bootstrap + OIDC providers + IAM roles); upstream for all repos' CI. Must be re-run if org is renamed or trust policy drifts.
   - `scripts/setup-budgets.sh` — creates AWS Budgets via management account
 
+### Transcription pipeline (TranscriptionStack)
+- **Upstream**: FoundationStack (SQS `heediq-transcription`, S3 `heediq-audio-uploads-*`, DynamoDB `heediq-jobs` + `heediq-recordings`); SharedServicesStack (ECR repo `heediq-worker-transcription` with AllowWorkloadAccountPull policy)
+- **Downstream**: `heediq-worker-transcription` (Python Fargate — image deployed by that repo's CI); SummarizationStack (triggered after job status set to done); client polling for job status via `heediq-jobs` table
+- **Shared surfaces**: `heediq-jobs` table (written by Fargate task, read by API); `heediq-recordings` table (updated by Fargate task); ECR repo (shared pull path with future workers)
+
 <!--
 ### Recording (capture)
 - Upstream: auth/onboarding, UI kit (Listen button)
 - Downstream: transcription pipeline, recordings library
 - Shared surfaces: recordings DynamoDB table, S3 audio bucket
-
-### Transcription pipeline
-- Upstream: recording capture, SQS queue, Fargate Spot workers
-- Downstream: summary/extraction, recordings library, transcript view
-- Shared surfaces: recordings table (status field), transcript storage
 -->

@@ -13,13 +13,14 @@
 - `scripts/setup.sh` — one-time CDK bootstrap + OIDC providers + IAM roles for all 4 accounts. Lives in `heediq-infra/scripts/`.
 - CI: `deploy-shared-services.yml` (path-filtered) + `deploy.yml` (workload, excludes shared-services path).
 - **`FoundationStack`** — PR #9 merged to develop. Deployed to dev. DynamoDB (4 tables), S3 (audio-uploads + web-assets), SQS (heediq-transcription), Cognito (Google + Microsoft OIDC IdPs, hosted domain), 12 SSM params. 28 CDK unit tests.
-- **SES → SharedServicesStack (D-058)** — PR #10 open (`feature/ses-shared-services`). Moves SES identity + DKIM CNAMEs + cross-account IAM role to SharedServicesStack. Removes SES from FoundationStack. Adds test gate to deploy-shared-services.yml.
+- **SES → SharedServicesStack (D-058)** — PR #10 merged (2026-06-19). SES identity + DKIM CNAMEs + cross-account IAM role in SharedServicesStack. FoundationStack loses SES, gains ses-sending-role-arn SSM param. Test gate added to deploy-shared-services.yml.
+- **TranscriptionStack** — PR pending (`feature/transcription-stack`). ECS cluster `heediq-transcription`, free (1 vCPU/2 GB) + paid (4 vCPU/8 GB) Fargate task defs, two EventBridge CfnPipes (free/paid tier filter on SQS messageAttribute), VPC (public subnets, no NAT), IAM execution + task + pipe roles, CloudWatch log group, 23 CDK unit tests. cdk.context.json seeded with eu-west-1 AZs for all workload accounts.
 
 ## What remains (in order, per D-050)
 
-1. **PR #10** — merge + deploy SharedServicesStack (SES + DKIM + IAM role), then redeploy FoundationStack (removes SES, adds ses-sending-role-arn SSM param).
+1. **TranscriptionStack PR** — open PR from `feature/transcription-stack` → develop. CI deploys updated TranscriptionStack to dev.
 
-2. **TranscriptionStack** — ECS cluster, free + paid Fargate task defs (D-055), EventBridge Pipe (SQS → RunTask), CloudWatch log group.
+2. **SummarizationStack** — Lambda, EventBridge trigger, IAM grants to Claude API secret.
 
 3. **SummarizationStack** — Lambda, EventBridge trigger, IAM grants to Claude API secret.
 
