@@ -18,7 +18,7 @@ duplicate their content. See `rules/08-memory.md` for the contract.
   - **TranscriptionStack** — EC2 GPU Spot (g4dn.xlarge, D-059); ASG min=0; two Ec2TaskDefs (free/paid, D-060); models baked in image (D-062). Deployed to dev.
   - **FoundationStack** — 5 tables (recordings, orgs, users, jobs w/ DDB Streams NEW_IMAGE, ws-connections w/ TTL + by-recording GSI); ACM wildcard cert eu-west-1 (D-063); 14 SSM params. Deployed to dev.
   - **WebSocketStack** — WebSocket API + heediq-ws-connect + heediq-ws-status-pusher (DDB Streams trigger) + custom domain ws-{env}.heediq.com + Route53AliasRecord (D-064) + 2 SSM params (D-061). Deployed to dev.
-  - **ApiStack** — Lambda heediq-api (Node.js 22, 512 MB, 30s) + HTTP API (CfnApi, ANY /{proxy+}, $default stage, CORS) + custom domain api-{env}.heediq.com + Route53AliasRecord + IAM grants (5 tables, S3, SQS, SecretsManager, SES role) + 2 SSM params. Branch feature/api-stack, PR pending.
+  - **ApiStack** — Lambda heediq-api (Node.js 22, 512 MB, 30s) + HTTP API (CfnApi, ANY /{proxy+}, $default stage, CORS) + custom domain api-{env}.heediq.com + Route53AliasRecord + IAM grants (5 tables, S3, SQS, SecretsManager, SES role) + 2 SSM params. Merged to develop (PR #23).
   - **SharedServicesStack** — ECR, Route 53, SES+DKIM, cross-account IAM roles (heediq-ses-email-sending, heediq-route53-dns-manager D-064). Deployed.
 
 <!--

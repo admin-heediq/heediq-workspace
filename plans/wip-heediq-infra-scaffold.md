@@ -1,6 +1,6 @@
 # WIP — heediq-infra CDK scaffold
 
-**Status:** Route53AliasRecord merged (PR #22 ✅). WebSocket stack merged to develop ✅. ApiStack implemented (branch `feature/api-stack`, PR pending). Next: SummarizationStack.
+**Status:** ApiStack merged (PR #23 ✅). Deployed to dev on next CI run. Next: SummarizationStack.
 
 ---
 
@@ -19,7 +19,7 @@
 - **TranscriptionStack — GPU migration (D-059, D-060, D-062)** — **PR #12 merged to develop**. Ec2TaskDefinition (bridge mode, gpuCount=1), EC2 Launch Template (ECS-optimized GPU AMI via SSM), ASG (min=0, 100% Spot CAPACITY_OPTIMIZED), AsgCapacityProvider (managed scaling 100%, managed termination protection), instance IAM role, pipes updated to EC2 capacity provider + no networkConfiguration. 30 CDK unit tests. PR #13 open: 2 post-merge fixes (ASCII security group description).
 - **WebSocketStack (D-061)** — **Merged to develop ✅ Deployed to dev.** FoundationStack updated (5th table heediq-ws-connections with TTL + by-recording GSI; DDB Streams NEW_IMAGE on heediq-jobs). New HeediqWebSocketStack: WebSocket API Gateway (CfnApi, 3 routes, AWS_PROXY integration), Connection Lambda heediq-ws-connect (29s timeout), Status Pusher Lambda heediq-ws-status-pusher (DDB Streams MODIFY filter, execute-api:ManageConnections), custom domain ws-{env}.heediq.com (Route53AliasRecord, D-064), 2 SSM params. 104 CDK unit tests total.
 - **Route53AliasRecord construct** — PR #22 merged. `lib/shared/route53-alias-record.ts` + handler. Reused by WebSocketStack and ApiStack.
-- **ApiStack (D-034, D-041, D-042, D-052)** — branch `feature/api-stack`, PR pending. Lambda heediq-api (Node.js 22, 512 MB, 30s), HTTP API (CfnApi, ANY /{proxy+}, $default stage, CORS per env), custom domain api-{env}.heediq.com (Route53AliasRecord), IAM grants (5 tables, S3, SQS, SecretsManager, SES role assumption), 2 SSM params (endpoint-url, regional-domain-name). 18 CDK unit tests (104 total green).
+- **ApiStack (D-034, D-041, D-042, D-052)** — **PR #23 merged to develop ✅**. Lambda heediq-api (Node.js 22, 512 MB, 30s), HTTP API (CfnApi, ANY /{proxy+}, $default stage, CORS per env), custom domain api-{env}.heediq.com (Route53AliasRecord), IAM grants (5 tables, S3, SQS, SecretsManager, SES role assumption), 2 SSM params (endpoint-url, regional-domain-name). 18 CDK unit tests (104 total green).
 
 ---
 
