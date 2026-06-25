@@ -1,6 +1,6 @@
 # WIP — heediq-infra CDK scaffold
 
-**Status:** TranscriptionStack deployed (Fargate, PR #11). Next: GPU migration + WebSocket stack.
+**Status:** GPU migration implemented (PR #12 ready to open). Next: WebSocket stack (D-061).
 
 ---
 
@@ -15,13 +15,14 @@
 - CI: `deploy-shared-services.yml` (path-filtered) + `deploy.yml` (workload).
 - **`FoundationStack`** — PR #9. DynamoDB (4 tables), S3 (audio-uploads + web-assets), SQS (heediq-transcription), Cognito (Google + Microsoft OIDC IdPs), 12 SSM params. 28 CDK unit tests. **Deployed.**
 - **SES → SharedServicesStack (D-058)** — PR #10. SES identity + DKIM CNAMEs + cross-account IAM role. **Deployed.**
-- **TranscriptionStack (Fargate, D-023/D-055)** — PR #11. ECS cluster, Fargate Spot free (1 vCPU/2 GB) + paid (4 vCPU/8 GB) task defs, two EventBridge CfnPipes, VPC (public subnets, no NAT), IAM roles, CloudWatch log group, 23 CDK unit tests. **Deployed to dev.** ⚠️ This Fargate implementation is superseded by D-059 — GPU migration is the next infra task.
+- **TranscriptionStack (Fargate, D-023/D-055)** — PR #11. ECS cluster, Fargate Spot free (1 vCPU/2 GB) + paid (4 vCPU/8 GB) task defs, two EventBridge CfnPipes, VPC (public subnets, no NAT), IAM roles, CloudWatch log group, 23 CDK unit tests. **Deployed to dev.** Superseded by D-059.
+- **TranscriptionStack — GPU migration (D-059, D-060, D-062)** — branch `feature/transcription-gpu`. Ec2TaskDefinition (bridge mode, gpuCount=1), EC2 Launch Template (ECS-optimized GPU AMI via SSM), ASG (min=0, 100% Spot CAPACITY_OPTIMIZED), AsgCapacityProvider (managed scaling 100%, managed termination protection), instance IAM role, pipes updated to EC2 capacity provider + no networkConfiguration. 30 CDK unit tests. **PR #12 ready to open** (closes/supersedes PR #11). Locked D-062 (models baked in image).
 
 ---
 
 ## What remains (ordered, per D-050)
 
-### 1. TranscriptionStack — GPU migration (D-059, D-060)
+### ~~1. TranscriptionStack — GPU migration (D-059, D-060)~~ ✅ DONE — PR #12 ready
 
 Branch: `feature/transcription-gpu`
 
