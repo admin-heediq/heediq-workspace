@@ -1,6 +1,6 @@
 # WIP — heediq-infra CDK scaffold
 
-**Status:** SummarizationStack implemented on `feature/summarization-stack`. Pre-PR gate green (125/125 tests). Next: open PR.
+**Status:** PR #24 merged to develop ✅ (SummarizationStack + docs coherence fixes). Next: WorkloadCfCertStack + WebStack.
 
 ---
 
