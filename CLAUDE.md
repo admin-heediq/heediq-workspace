@@ -7,7 +7,7 @@ loads.
 
 Heediq is a B2B SaaS meeting-recording & transcription platform: record → transcribe → extract
 structured requirements / decisions / open questions → push to Jira/Confluence. AWS serverless
-(Lambda, Fargate Spot, SQS, DynamoDB), React frontend, AWS CDK + GitHub Actions.
+(Lambda, EC2 GPU Spot, SQS, DynamoDB), React frontend, AWS CDK + GitHub Actions.
 
 ---
 
