@@ -555,6 +555,13 @@ DNS validation via Route 53 (D-051). No per-subdomain certs unless a specific re
 **Supersedes:** —  **Superseded by:** —
 **Related code:** `heediq-worker-transcription/` Dockerfile + CI
 
+### D-065 · SummarizationStack trigger — SQS queue, source-agnostic (2026-06-25) — Locked
+**Area:** Architecture / Infra
+**Decision:** `HeediqSummarizationStack` creates an SQS queue `heediq-summarization` (+ DLQ) as the single entry point for all summarization requests. All content sources enqueue to this queue: transcription worker (audio, after faster-whisper completes) and API Lambda (text files, PDFs, emails, Excel, and any future source — skip-transcription paths). Queue message payload carries `sourceType` + `contentRef` (S3 path or inline). Queue URL/ARN published to SSM (`/heediq/summarization/queue-url`, `/heediq/summarization/queue-arn`). Transcription task role and API Lambda role each get `sqs:SendMessage` on the queue. Summarization Lambda polls the queue as its event source.
+**Why:** DDB Streams on `heediq-jobs` only works cleanly for the audio path (transcription worker writes the trigger status). Multi-source summarization (text files already in D-026; emails, PDFs, Excel are natural extensions) needs a source-agnostic handoff. SQS gives one typed entry point regardless of how content arrived. Matches D-032's provider-interface design: swappable per source type, not just per model.
+**Supersedes:** —         **Superseded by:** —
+**Related code:** `heediq-infra/lib/summarization/summarization-stack.ts`
+
 ---
 
 ## Open / proposed (not yet locked)
