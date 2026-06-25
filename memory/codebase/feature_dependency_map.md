@@ -26,6 +26,11 @@ Drives "what to retest" (Step 2) and PR blast-radius notes. One entry per featur
 - **Downstream**: `heediq-worker-transcription` (Python EC2 GPU Spot — image deployed by that repo's CI, D-059); SummarizationStack (triggered after job status set to done); WebSocket status push via Status Pusher Lambda + DDB Streams on `heediq-jobs` (D-061)
 - **Shared surfaces**: `heediq-jobs` table (written by EC2 GPU task, read by Status Pusher Lambda + API); `heediq-recordings` table (updated by EC2 GPU task); ECR repo (shared pull path with future workers)
 
+### WebSocket real-time status (WebSocketStack)
+- **Upstream**: FoundationStack (heediq-jobs DDB Streams stream ARN; heediq-ws-connections table); SharedServicesStack (ACM cert ARN in SSM /heediq/shared/cert-arn-eu-west-1); Cognito (JWKS for JWT validation in Connection Lambda)
+- **Downstream**: heediq-web (connects via wss://ws-{env}.heediq.com; receives status push events); heediq-api (Connection Lambda code deployed by heediq-api CI per D-050)
+- **Shared surfaces**: heediq-ws-connections table (written by Connect Lambda, read by Status Pusher Lambda); heediq-jobs DDB Streams (read-only by Status Pusher Lambda); SSM /heediq/api/ws-endpoint-url (read by heediq-web and heediq-api)
+
 <!--
 ### Recording (capture)
 - Upstream: auth/onboarding, UI kit (Listen button)

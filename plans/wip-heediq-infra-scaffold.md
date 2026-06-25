@@ -1,6 +1,6 @@
 # WIP — heediq-infra CDK scaffold
 
-**Status:** GPU migration implemented (PR #12 ready to open). Next: WebSocket stack (D-061).
+**Status:** GPU migration merged (PR #12 ✅). WebSocket stack implemented (PR pending on feature/websocket-stack). Next: SummarizationStack.
 
 ---
 
@@ -16,13 +16,14 @@
 - **`FoundationStack`** — PR #9. DynamoDB (4 tables), S3 (audio-uploads + web-assets), SQS (heediq-transcription), Cognito (Google + Microsoft OIDC IdPs), 12 SSM params. 28 CDK unit tests. **Deployed.**
 - **SES → SharedServicesStack (D-058)** — PR #10. SES identity + DKIM CNAMEs + cross-account IAM role. **Deployed.**
 - **TranscriptionStack (Fargate, D-023/D-055)** — PR #11. ECS cluster, Fargate Spot free (1 vCPU/2 GB) + paid (4 vCPU/8 GB) task defs, two EventBridge CfnPipes, VPC (public subnets, no NAT), IAM roles, CloudWatch log group, 23 CDK unit tests. **Deployed to dev.** Superseded by D-059.
-- **TranscriptionStack — GPU migration (D-059, D-060, D-062)** — branch `feature/transcription-gpu`. Ec2TaskDefinition (bridge mode, gpuCount=1), EC2 Launch Template (ECS-optimized GPU AMI via SSM), ASG (min=0, 100% Spot CAPACITY_OPTIMIZED), AsgCapacityProvider (managed scaling 100%, managed termination protection), instance IAM role, pipes updated to EC2 capacity provider + no networkConfiguration. 30 CDK unit tests. **PR #12 ready to open** (closes/supersedes PR #11). Locked D-062 (models baked in image).
+- **TranscriptionStack — GPU migration (D-059, D-060, D-062)** — **PR #12 merged to develop**. Ec2TaskDefinition (bridge mode, gpuCount=1), EC2 Launch Template (ECS-optimized GPU AMI via SSM), ASG (min=0, 100% Spot CAPACITY_OPTIMIZED), AsgCapacityProvider (managed scaling 100%, managed termination protection), instance IAM role, pipes updated to EC2 capacity provider + no networkConfiguration. 30 CDK unit tests. PR #13 open: 2 post-merge fixes (ASCII security group description).
+- **WebSocketStack (D-061)** — branch `feature/websocket-stack`. FoundationStack updated (5th table heediq-ws-connections with TTL + by-recording GSI; DDB Streams NEW_IMAGE on heediq-jobs; SSM param ws-connections-table-name). New HeediqWebSocketStack: WebSocket API Gateway (CfnApi, 3 routes, AWS_PROXY integration), Connection Lambda heediq-ws-connect (Node.js 22, 29s timeout), Status Pusher Lambda heediq-ws-status-pusher (DDB Streams event source, MODIFY filter, execute-api:ManageConnections IAM), custom domain ws-{env}.heediq.com (REGIONAL cert from SSM), 2 SSM params (ws-endpoint-url, ws-regional-domain-name). config.ts DOMAINS.ws added. 18 new CDK unit tests (78 total green). **PR pending.**
 
 ---
 
 ## What remains (ordered, per D-050)
 
-### ~~1. TranscriptionStack — GPU migration (D-059, D-060)~~ ✅ DONE — PR #12 ready
+### ~~1. TranscriptionStack — GPU migration (D-059, D-060)~~ ✅ DONE — PR #12 merged
 
 Branch: `feature/transcription-gpu`
 
@@ -62,7 +63,7 @@ Branch: `feature/transcription-gpu`
 
 ---
 
-### 2. FoundationStack update — heediq-ws-connections table + DDB Streams (D-061)
+### ~~2. FoundationStack update — heediq-ws-connections table + DDB Streams (D-061)~~ ✅ DONE
 
 Branch: `feature/websocket-stack` (or same branch if done together)
 
@@ -78,7 +79,7 @@ Branch: `feature/websocket-stack` (or same branch if done together)
 
 ---
 
-### 3. WebSocketStack — new stack (D-061)
+### ~~3. WebSocketStack — new stack (D-061)~~ ✅ DONE
 
 New file: `lib/websocket/websocket-stack.ts`
 
