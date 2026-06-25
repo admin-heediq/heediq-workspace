@@ -532,6 +532,13 @@ DNS validation via Route 53 (D-051). No per-subdomain certs unless a specific re
 **Superseded by:** —
 **Related code:** `heediq-infra/lib/websocket/websocket-stack.ts` (new), `heediq-infra/lib/foundation/foundation-stack.ts`
 
+### D-062 · Whisper + pyannote models baked into Docker image (2026-06-25) — Locked
+**Area:** Infra / Cost
+**Decision:** faster-whisper model weights and pyannote diarization models are downloaded at Docker build time and embedded in the ECR image — not downloaded at container startup. Two images: one per tier (`small` for free, `large-v3` + pyannote for paid), built in `heediq-worker-transcription` CI and pushed to ECR in the shared-services account.
+**Why:** Runtime download from HuggingFace adds 30–60s (small) or 2–5 min (large-v3 + pyannote) to cold start, plus internet egress cost. ECR pull within AWS (same region, S3-backed) is fast (~2–40s depending on image size) and free. Baking models in preserves the D-059 cold-start estimate of ~45–90s and per-meeting cost numbers.
+**Supersedes:** —  **Superseded by:** —
+**Related code:** `heediq-worker-transcription/` Dockerfile + CI
+
 ---
 
 ## Open / proposed (not yet locked)
