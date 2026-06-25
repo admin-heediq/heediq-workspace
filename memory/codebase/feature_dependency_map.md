@@ -23,8 +23,8 @@ Drives "what to retest" (Step 2) and PR blast-radius notes. One entry per featur
 
 ### Transcription pipeline (TranscriptionStack)
 - **Upstream**: FoundationStack (SQS `heediq-transcription`, S3 `heediq-audio-uploads-*`, DynamoDB `heediq-jobs` + `heediq-recordings`); SharedServicesStack (ECR repo `heediq-worker-transcription` with AllowWorkloadAccountPull policy)
-- **Downstream**: `heediq-worker-transcription` (Python Fargate — image deployed by that repo's CI); SummarizationStack (triggered after job status set to done); client polling for job status via `heediq-jobs` table
-- **Shared surfaces**: `heediq-jobs` table (written by Fargate task, read by API); `heediq-recordings` table (updated by Fargate task); ECR repo (shared pull path with future workers)
+- **Downstream**: `heediq-worker-transcription` (Python EC2 GPU Spot — image deployed by that repo's CI, D-059); SummarizationStack (triggered after job status set to done); WebSocket status push via Status Pusher Lambda + DDB Streams on `heediq-jobs` (D-061)
+- **Shared surfaces**: `heediq-jobs` table (written by EC2 GPU task, read by Status Pusher Lambda + API); `heediq-recordings` table (updated by EC2 GPU task); ECR repo (shared pull path with future workers)
 
 <!--
 ### Recording (capture)

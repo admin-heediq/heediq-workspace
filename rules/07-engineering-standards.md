@@ -32,18 +32,19 @@ serverless, privacy-sensitive transcription product. Treat as defaults to confir
   the frontend maps these to user-facing messages (`04-loading-and-feedback.md`).
 - **React error boundaries** around feature areas so one screen's failure doesn't blank the app; pair
   with a designed ErrorState.
-- **Tracing/logging**: structured logs + correlation IDs through the pipeline (API → SQS → Fargate →
+- **Tracing/logging**: structured logs + correlation IDs through the pipeline (API → SQS → ECS (EC2 GPU) →
   DynamoDB); CloudWatch + X-Ray (or equivalent). A failure in a long job must be traceable end to
   end.
 - **Frontend error reporting** (e.g. Sentry) for unhandled exceptions, scrubbed of PII.
 - Fail loudly in dev, gracefully in prod. No silent catch-and-ignore.
 
 ## 4. Cost awareness (Heediq runs on tight per-meeting margins)
-- Flag any change that affects **per-meeting transcription cost** (model tier, diarization, parallel
-  chunking, Fargate Spot vs On-Demand, silence trimming) in the plan and PR. Cost is a first-class
+- Flag any change that affects **per-meeting transcription cost** (model tier, diarization,
+  EC2 Spot vs On-Demand, instance type, silence trimming) in the plan and PR. Cost is a first-class
   review dimension here.
-- Respect locked cost decisions: free tier = whisper `small` on CPU; paid = `large-v3` + pyannote;
-  silence-trim ok (10–30%), no 2× speed-up (accuracy loss). Don't quietly change a tier's economics.
+- Respect locked cost decisions: free tier = whisper `small`; paid = `large-v3` + pyannote (both on
+  EC2 GPU Spot, g4dn.xlarge, D-059); silence-trim ok (10–30%), no 2× speed-up (accuracy loss).
+  Don't quietly change a tier's model assignments or compute economics.
 - Watch DynamoDB access patterns (avoid scans/hot partitions), Lambda duration/memory, and S3 egress.
 
 ## 5. Accessibility (gate, not nice-to-have)
@@ -56,7 +57,7 @@ serverless, privacy-sensitive transcription product. Treat as defaults to confir
   player); no needless re-renders; virtualize long lists (recordings library, long transcripts).
 - **Backend**: mind Lambda cold starts on user-facing paths; keep payloads small; paginate list APIs;
   stream/chunk large transcripts rather than loading whole.
-- Long jobs run async via SQS/Fargate — never block a request thread on transcription.
+- Long jobs run async via SQS/ECS (EC2 GPU Spot) — never block a request thread on transcription.
 
 ## 7. State management (frontend)
 - **Server state** via a query/cache library (TanStack Query) — single source of loading/error/
