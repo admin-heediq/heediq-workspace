@@ -532,6 +532,22 @@ DNS validation via Route 53 (D-051). No per-subdomain certs unless a specific re
 **Superseded by:** —
 **Related code:** `heediq-infra/lib/websocket/websocket-stack.ts` (new), `heediq-infra/lib/foundation/foundation-stack.ts`
 
+### D-063 · Per-workload-account ACM wildcard cert (eu-west-1) in FoundationStack (2026-06-25) — Locked
+**Area:** Infra
+**Decision:** Each workload account (dev/staging/prod) creates its own `*.heediq.com` ACM wildcard cert in `eu-west-1` via `FoundationStack.wildcardCert`. This cert is passed directly as a CDK prop to `WebSocketStack` and `ApiStack`. The shared-services account cert cannot be used — API Gateway and WebSocket APIs reject cross-account ACM cert references (CloudFormation error at deploy time).
+**Why:** Discovered during WebSocket stack deployment. ACM cross-account restriction is absolute for API Gateway regional endpoints. Cert ARN stored in SSM `/heediq/infra/cert-arn-eu-west-1` in each workload account. ACM generates a unique validation CNAME per cert request (not per domain) — the workload cert's CNAME must be manually added to Route 53 in shared-services on first deploy for each environment (one-time; ACM auto-renews).
+**Supersedes:** — (clarifies D-053 placement; D-053 wildcard scope and two-region strategy unchanged)
+**Superseded by:** —
+**Related code:** `heediq-infra/lib/foundation/foundation-stack.ts` (wildcardCert), `heediq-infra/README.md` (Domains section)
+
+### D-064 · heediq-route53-dns-manager cross-account IAM role (2026-06-25) — Locked
+**Area:** Infra
+**Decision:** IAM role `heediq-route53-dns-manager` in shared-services account trusts workload accounts (dev/staging/prod) to call `route53:ChangeResourceRecordSets + ListResourceRecordSets + GetChange` on the `heediq.com` hosted zone (Z0875312RP7WHSNW7AUM) only. Role ARN stored in SSM `/heediq/shared/route53-dns-manager-role-arn`.
+**Why:** Route 53 is in shared-services; workload accounts need to write DNS records for their own subdomains (cert validation CNAMEs + A-alias records for ws/api/web custom domains). Cross-account IAM role assumption is the standard pattern. Role is the foundational piece; CDK custom resource Lambdas that assume it are the next PR.
+**Supersedes:** —
+**Superseded by:** —
+**Related code:** `heediq-infra/lib/shared-services/shared-services-stack.ts`
+
 ### D-062 · Whisper + pyannote models baked into Docker image (2026-06-25) — Locked
 **Area:** Infra / Cost
 **Decision:** faster-whisper model weights and pyannote diarization models are downloaded at Docker build time and embedded in the ECR image — not downloaded at container startup. Two images: one per tier (`small` for free, `large-v3` + pyannote for paid), built in `heediq-worker-transcription` CI and pushed to ECR in the shared-services account.

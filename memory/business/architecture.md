@@ -13,7 +13,7 @@ Cognito, CloudFront, Route 53, Secrets Manager, CloudWatch.
 ## Environments
 Five AWS accounts under one AWS Organization (D-036):
 - **Management** — org root, IAM Identity Center (SSO), consolidated billing. No workloads.
-- **Shared services** — ECR (all container images), Route 53 hosted zone (heediq.com), ACM wildcard certs (eu-west-1 + us-east-1), SES email identity + DKIM records, cross-account email sending IAM role, Zoho DNS records. All DNS lives here alongside ECR (D-051–D-058).
+- **Shared services** — ECR (all container images), Route 53 hosted zone (heediq.com), SES email identity + DKIM records, cross-account email sending IAM role, Route 53 DNS manager IAM role, Zoho DNS records, ACM wildcard cert eu-west-1 (shared-services own use) + us-east-1 (CloudFront). All DNS lives here (D-051–D-058, D-064). Workload-facing eu-west-1 certs live in each workload account FoundationStack — ACM cross-account restriction (D-063).
 - **Dev / Staging / Prod** — fully isolated workload accounts (DynamoDB, Lambda, S3, SQS, Cognito, etc.).
 
 Human access via IAM Identity Center (SSO) — one login URL, permission sets defined centrally, users assume roles per account. No IAM users or long-lived access keys.
@@ -83,9 +83,7 @@ Status stages displayed to the user:
 `starting` is the worker's first DynamoDB write after picking up the SQS message — before model
 load — so EC2 cold-start latency is visible as "Transcription server starting…".
 
-New resources: `HeediqWebSocketStack` (WebSocket API + $connect/$disconnect Lambda + Status Pusher
-Lambda); `heediq-ws-connections` DynamoDB table in FoundationStack; subdomains `ws.heediq.com` /
-`ws-staging.heediq.com` / `ws-dev.heediq.com` (covered by existing `*.heediq.com` wildcard cert).
+Resources: `HeediqWebSocketStack` (WebSocket API + `heediq-ws-connect` Lambda + `heediq-ws-status-pusher` Lambda); `heediq-ws-connections` DynamoDB table in FoundationStack; subdomains `ws.heediq.com` / `ws-staging.heediq.com` / `ws-dev.heediq.com` — covered by `*.heediq.com` wildcard cert in `FoundationStack.wildcardCert` (D-063). All deployed to dev.
 
 ## Cost optimizations
 - **Silence trimming:** accepted — safe, typically 10–30% duration reduction, no meaningful

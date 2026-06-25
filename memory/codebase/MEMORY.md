@@ -14,10 +14,11 @@ duplicate their content. See `rules/08-memory.md` for the contract.
 ## Modules / Features (pointers)
 
 - **heediq-infra** — CDK TypeScript project; all stacks for all accounts.
-  README: `../../heediq-infra/README.md` · Decisions: D-036, D-037, D-038, D-044, D-045, D-051–D-062
-  - **TranscriptionStack** — EC2 GPU Spot (g4dn.xlarge, D-059); ASG min=0; two Ec2TaskDefs (free/paid, D-060); models baked in image (D-062). Branch `feature/transcription-gpu` (PR #12 pending).
-  - **FoundationStack** — 5 tables (recordings, orgs, users, jobs w/ DDB Streams NEW_IMAGE, ws-connections w/ TTL + by-recording GSI); 13 SSM params. Deployed (4-table base) + WebSocket additions on feature/websocket-stack PR pending.
-  - **WebSocketStack** — implemented on feature/websocket-stack (D-061). WebSocket API + Connection Lambda heediq-ws-connect + Status Pusher Lambda heediq-ws-status-pusher (DDB Streams trigger) + custom domain ws-{env}.heediq.com + 2 SSM params. PR pending.
+  README: `../../heediq-infra/README.md` · Decisions: D-036, D-037, D-038, D-044, D-045, D-051–D-064
+  - **TranscriptionStack** — EC2 GPU Spot (g4dn.xlarge, D-059); ASG min=0; two Ec2TaskDefs (free/paid, D-060); models baked in image (D-062). Deployed to dev.
+  - **FoundationStack** — 5 tables (recordings, orgs, users, jobs w/ DDB Streams NEW_IMAGE, ws-connections w/ TTL + by-recording GSI); ACM wildcard cert eu-west-1 (D-063); 14 SSM params. Deployed to dev.
+  - **WebSocketStack** — WebSocket API + heediq-ws-connect + heediq-ws-status-pusher (DDB Streams trigger) + custom domain ws-{env}.heediq.com + 2 SSM params (D-061). Deployed to dev. Route 53 A-alias records pending.
+  - **SharedServicesStack** — ECR, Route 53, SES+DKIM, cross-account IAM roles (heediq-ses-email-sending, heediq-route53-dns-manager D-064). Deployed.
 
 <!--
 - **<feature/area>** — <one-line summary>.
