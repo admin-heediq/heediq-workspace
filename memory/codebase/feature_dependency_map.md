@@ -31,6 +31,15 @@ Drives "what to retest" (Step 2) and PR blast-radius notes. One entry per featur
 - **Downstream**: heediq-web (connects via wss://ws-{env}.heediq.com; receives status push events); heediq-api (Connection Lambda code deployed by heediq-api CI per D-050)
 - **Shared surfaces**: heediq-ws-connections table (written by Connect Lambda, read by Status Pusher Lambda); heediq-jobs DDB Streams (read-only by Status Pusher Lambda); SSM /heediq/api/ws-endpoint-url (read by heediq-web and heediq-api)
 
+### Summarization pipeline (SummarizationStack)
+- **Upstream**: FoundationStack (heediq-jobs + heediq-recordings DynamoDB tables; heediq-audio-uploads S3 bucket); SummarizationStack (heediq-summarization SQS queue — created here, consumed by Lambda event source)
+- **Downstream**: `heediq-worker-summarization` (Node Lambda — placeholder in stack; real implementation deployed by that repo's CI, D-043); `heediq-api` (reads structured output from heediq-recordings); `heediq-web` (displays extraction results)
+- **Shared surfaces**:
+  - `heediq-summarization` SQS queue — written by TranscriptionStack EC2 task role (audio path) + ApiStack Lambda (direct non-audio path, D-065, D-026); consumed by summarization Lambda
+  - `heediq-jobs` table — written by summarization Lambda (status: `summarizing → done/failed`); also written by transcription worker + read by Status Pusher Lambda
+  - `heediq-recordings` table — written by summarization Lambda (structured extraction fields); also written by transcription worker + read by ApiStack Lambda
+  - `heediq-audio-uploads-*` S3 bucket — read by summarization Lambda (transcript + direct-path content files); also written by API (presigned URL upload)
+
 <!--
 ### Recording (capture)
 - Upstream: auth/onboarding, UI kit (Listen button)

@@ -1,6 +1,6 @@
 # WIP — heediq-infra CDK scaffold
 
-**Status:** ApiStack merged (PR #23 ✅). Deployed to dev on next CI run. Next: SummarizationStack.
+**Status:** SummarizationStack implemented on `feature/summarization-stack`. Pre-PR gate green (125/125 tests). Next: open PR.
 
 ---
 
@@ -113,9 +113,9 @@ ws: {
 
 ---
 
-### 4. SummarizationStack
+### ~~4. SummarizationStack~~ ✅ DONE — `feature/summarization-stack` (pre-PR gate green, 125 tests)
 
-Lambda, DDB Streams or SQS trigger (TBD — depends on how summarization is triggered post-transcription), IAM grants for Claude API secret, status writes to `heediq-jobs`.
+SQS queue `heediq-summarization` + DLQ + Lambda `heediq-summarization` (Node.js 22, 512 MB, 300s). Source-agnostic trigger (D-065): audio via transcription worker, non-audio (text/PDF/email/Excel) via API Lambda. IAM: SecretsManager /heediq/summarization/*, DynamoDB jobs+recordings read/write, S3 audio bucket read. TranscriptionStack and ApiStack each got sqs:SendMessage + SUMMARIZATION_QUEUE_URL env var (deterministic ARN, no cross-stack CDK dep). 3 SSM params.
 
 ---
 
