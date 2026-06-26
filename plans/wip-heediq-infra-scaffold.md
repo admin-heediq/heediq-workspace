@@ -1,6 +1,6 @@
 # WIP — heediq-infra CDK scaffold
 
-**Status:** WorkloadCfCertStack + WebStack implemented on `feature/web-stack`. Pre-PR gate green (151 tests). PR pending.
+**Status:** All planned CDK stacks implemented and merged. PR #25 merged to develop (WorkloadCfCertStack + WebStack). **Manual deploy step pending for dev:** deploy HeediqWorkloadCfCertStack + HeediqWebStack to dev account (requires us-east-1 CNAME for cert validation — see README Step 3b).
 
 ---
 
