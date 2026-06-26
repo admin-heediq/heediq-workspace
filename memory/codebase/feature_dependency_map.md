@@ -40,6 +40,15 @@ Drives "what to retest" (Step 2) and PR blast-radius notes. One entry per featur
   - `heediq-recordings` table — written by summarization Lambda (structured extraction fields); also written by transcription worker + read by ApiStack Lambda
   - `heediq-audio-uploads-*` S3 bucket — read by summarization Lambda (transcript + direct-path content files); also written by API (presigned URL upload)
 
+### Web frontend delivery (WorkloadCfCertStack + WebStack)
+- **Upstream**: FoundationStack (heediq-web-assets-{accountId} S3 bucket — OAC bucket policy grant added there; wildcardCert not used here); WorkloadCfCertStack (us-east-1 ACM cert via crossRegionReferences prop, D-053); SharedServicesStack (heediq-route53-dns-manager role for Route53AliasRecord D-064); `lib/config.ts → DOMAINS` (web domain per env)
+- **Downstream**: heediq-web (React SPA — served from CloudFront; CI does S3 sync + `aws cloudfront create-invalidation` using `/heediq/web/cloudfront-distribution-id` SSM param); heediq-api (reads `/heediq/web/url` SSM param for CORS origin)
+- **Shared surfaces**:
+  - `heediq-web-assets-{accountId}` S3 bucket — written by heediq-web CI; served by CloudFront via OAC (source-account policy in FoundationStack)
+  - `/heediq/web/url` SSM param — consumed by heediq-api (CORS) and heediq-web (runtime config)
+  - `/heediq/web/cloudfront-distribution-id` SSM param — consumed by heediq-web CI for cache invalidation
+  - **Key CDK constraint**: OAC bucket policy must live in FoundationStack (source-account condition), not WebStack — avoids circular cross-stack reference. `s3.Bucket.fromBucketName()` in WebStack prevents CDK from adding a second bucket policy.
+
 <!--
 ### Recording (capture)
 - Upstream: auth/onboarding, UI kit (Listen button)

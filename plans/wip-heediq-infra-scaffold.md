@@ -1,6 +1,6 @@
 # WIP — heediq-infra CDK scaffold
 
-**Status:** PR #24 merged to develop ✅ (SummarizationStack + docs coherence fixes). Next: WorkloadCfCertStack + WebStack.
+**Status:** WorkloadCfCertStack + WebStack implemented on `feature/web-stack`. Pre-PR gate green (151 tests). PR pending.
 
 ---
 
@@ -119,15 +119,19 @@ SQS queue `heediq-summarization` + DLQ + Lambda `heediq-summarization` (Node.js 
 
 ---
 
-### 5. ApiStack
+### ~~5. ApiStack~~ ✅ DONE — PR #23 merged to develop
 
-Lambda (Hono, D-034), API Gateway HTTP API, custom domain (`api.heediq.com` / `api-dev.heediq.com`), ACM cert from SSM. **Access control enforcement** for model selection (D-060): job enqueue endpoint rejects `TIER=paid` requests from free users.
+Lambda (Hono, D-034), HTTP API, custom domain, Route53AliasRecord, 2 SSM params.
 
 ---
 
-### 6. WebStack
+### 6. WorkloadCfCertStack + WebStack ✅ IMPLEMENTED — PR pending (feature/web-stack)
 
-CloudFront distribution (`PriceClass_100`, D-055), custom domain, cert from SSM us-east-1, Route 53 alias.
+WorkloadCfCertStack: ACM wildcard cert us-east-1 per workload account. Manual CNAME step required (documented in README Step 3b). crossRegionReferences: true → cert ARN flows to WebStack as prop.
+
+WebStack: CloudFront + S3 OAC + custom domain + security headers + SPA routing + Route53AliasRecord + 2 SSM params. OAC bucket policy lives in FoundationStack (source-account condition, avoids circular CDK dep).
+
+26 new tests (4 + 21 + 1 foundation). 151/151 passing, typecheck clean.
 
 ---
 
