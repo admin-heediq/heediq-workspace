@@ -1,6 +1,6 @@
 # WIP — heediq-infra CDK scaffold
 
-**Status:** All planned CDK stacks implemented and merged. PR #25 merged to develop (WorkloadCfCertStack + WebStack). **Manual deploy step pending for dev:** deploy HeediqWorkloadCfCertStack + HeediqWebStack to dev account (requires us-east-1 CNAME for cert validation — see README Step 3b).
+**Status:** All planned CDK stacks implemented, merged, and deployed to dev. PR #25 (WorkloadCfCertStack + WebStack) + PR #26 (setup.sh us-east-1 bootstrap fix) both merged. dev.heediq.com is live and accessible.
 
 ---
 
