@@ -10,8 +10,8 @@
 
 Repos must be built in this order — each depends on the previous:
 
-1. ~~**heediq-shared**~~ ✅ PR #1 open (feature/shared-types-scaffold → develop). 49 tests, typecheck + build clean.
-2. ~~**heediq-api**~~ ✅ PR #1 open (feature/api-scaffold → develop). 16 tests, typecheck clean.
+1. ~~**heediq-shared**~~ ✅ Merged to develop + main. `@heediq/shared@0.1.0` published to GitHub Packages.
+2. ~~**heediq-api**~~ ✅ PR #1 open (feature/api-scaffold → develop). 16 tests, typecheck clean. deploy.yml added. `@heediq/shared` updated to `^0.1.0` from registry.
 3. **heediq-worker-transcription** → faster-whisper container: SIGTERM handler, status stage writes. ⬅ CURRENT
 4. **heediq-worker-summarization** → Claude API extraction Lambda: SQS trigger, structured output.
 5. **heediq-web** → Vite + React PWA: auth flow, home/Listen, recordings library, detail/summary view.
@@ -158,8 +158,8 @@ These must happen in order before the pipeline works:
 
 1. ~~**Widen `GitHubActionsDeployRole` trust**~~ ✅ heediq-infra PR #27 open (chore/widen-deploy-role-trust → develop). After merge: re-run `./scripts/setup.sh` per account.
 2. ~~**Add `heediq-api` deploy workflow**~~ ✅ Added to feature/api-scaffold branch (PR #1). esbuild bundle → zip → Lambda update. Build once, same artifact to dev/staging/prod.
-3. **Merge heediq-shared PR #1** → develop → then `develop` → `main` PR → merge triggers publish.yml → `@heediq/shared@0.1.0` published to GitHub Packages.
-4. **Update heediq-api** `package.json`: change `"@heediq/shared": "file:../heediq-shared"` → `"^0.1.0"`. Run `pnpm install`. Commit. The current `file:` reference is local-only and breaks CI.
+3. ~~**Merge heediq-shared PR #1**~~ ✅ Published `@heediq/shared@0.1.0` to GitHub Packages.
+4. ~~**Update heediq-api**~~ ✅ `^0.1.0` from registry, lockfile updated, pushed to feature/api-scaffold.
 
 ## Deployment model (reference — all app repos)
 
