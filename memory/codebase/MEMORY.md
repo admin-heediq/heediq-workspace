@@ -32,7 +32,13 @@ duplicate their content. See `rules/08-memory.md` for the contract.
 
 - **heediq-api** — Hono Lambda: all REST endpoints under `/api/v1/`, JWT auth middleware, D-060 access control.
   README: `../../heediq-api/README.md` · Decisions: D-033, D-034, D-041, D-042, D-060
-  - PR #1 open (feature/api-scaffold → develop). 16 tests. deploy.yml: esbuild bundle → Lambda update on develop push.
+  - PR #1 open (feature/api-scaffold → develop). 17 tests (+1 regression for tier SQS attribute). deploy.yml: esbuild bundle → Lambda update on develop push.
+  - Critical bug fixed: `SendMessageCommand` now sets `MessageAttributes: { tier }` on transcription enqueue — without this attribute, both EventBridge Pipe filters fail and no job is ever processed.
+
+- **heediq-worker-transcription** — Python ECS worker: one RunTask = one job via SQS_MESSAGE_BODY container override (D-066). Two per-tier images (free/paid) with model weights baked in (D-062).
+  README: `../../heediq-worker-transcription/README.md` · Decisions: D-047, D-059, D-062, D-065, D-066
+  - Branch `feature/transcription-worker`. 11 pytest tests + mypy strict. deploy.yml: two SHA-tagged images → shared-services ECR → ssm put-parameter + register-task-definition + pipes update-pipe per env.
+  - Transcript written to `heediq-recordings[recordingId].transcript` in DynamoDB (task role has no S3 write grant). Downstream summarization worker reads it by recordingId.
 
 <!--
 - **<feature/area>** — <one-line summary>.

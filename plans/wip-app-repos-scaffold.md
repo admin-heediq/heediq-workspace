@@ -1,6 +1,6 @@
 # WIP — App repos scaffold (MVP critical path)
 
-**Status:** In progress — all CDK infra deployed to dev. heediq-shared published, heediq-api PR ready.
+**Status:** In progress — all CDK infra deployed to dev. heediq-shared published. heediq-api PR #1 open (+ SQS tier attribute fix committed on feature/api-scaffold). heediq-worker-transcription scaffolded (feature/transcription-worker, PR not yet opened). heediq-infra fix/transcription-task-runtime (D-062/D-066 + SSM image tag promotion) not yet PR'd.
 
 **MVP build order (D-010):** auth/onboarding → home/Listen → recordings library → recording detail/summary
 
@@ -9,26 +9,23 @@
 ## Repo build sequence
 
 1. ~~**heediq-shared**~~ ✅ Published `@heediq/shared@0.1.0` to GitHub Packages. 49 tests.
-2. ~~**heediq-api**~~ ✅ PR #1 open (feature/api-scaffold → develop). 16 tests. deploy.yml added. `^0.1.0` from registry. Ready to merge.
-3. **heediq-worker-transcription** → faster-whisper Python container. ⬅ CURRENT
-4. **heediq-worker-summarization** → Node Lambda, Claude API extraction.
+2. ~~**heediq-api**~~ ✅ PR #1 open (feature/api-scaffold → develop). 17 tests. deploy.yml added. `^0.1.0` from registry. SQS `tier` message attribute fix included (d65b217). Ready to merge.
+3. ~~**heediq-worker-transcription**~~ ✅ Scaffolded on `feature/transcription-worker`. PR not yet opened. ⬅ JUST COMPLETED
+4. **heediq-worker-summarization** → Node Lambda, Claude API extraction. ⬅ NEXT
 5. **heediq-web** → Vite + React PWA.
 
 ---
 
-## 3. heediq-worker-transcription ⬅ CURRENT
+## 3. ~~heediq-worker-transcription~~ ✅ DONE
 
-**Branch:** `feature/transcription-worker`
+**Branch:** `feature/transcription-worker` (commits: 1324a2f feat + e9d356e docs)
 
-**Purpose:** faster-whisper Python container — process SQS job, write status stages, handle Spot interruption.
-
-### What to build
-- SQS long-poll loop (receive → process → delete)
-- `status_writer.py` — writes job status stages to `heediq-jobs` DynamoDB
-- Status progression: `starting` (before model load) → `transcribing` → `diarizing` (large-v3 only) → enqueue summarization SQS message → `done`
-- SIGTERM handler: catch → write `status=retrying` → exit cleanly (SQS visibility timeout expires → auto-retry)
-- Dockerfiles: two images (free=small, paid=large-v3+pyannote) with models baked in (D-062)
-- deploy.yml: docker build → ECR push (sha-<7chars> tag) → ECS update-service (D-047)
+**Key implementation notes (carry into heediq-worker-summarization):**
+- **No SQS poll loop** — EventBridge Pipes is the consumer; job payload arrives via `SQS_MESSAGE_BODY` container override. One RunTask = one job (D-066).
+- **Transcript → DynamoDB, not S3** — task role has no S3 write grant (read-only). Written to `heediq-recordings[recordingId].transcript`. Summarization worker must read from DynamoDB by `recordingId`.
+- **Re-enqueue on SIGTERM** — Pipes deletes the SQS message on RunTask launch; worker must explicitly re-enqueue with `tier` attribute on Spot interruption.
+- **Image promotion** — `deploy.yml` uses `GitHubActionsECRRole` in shared-services for push; `GitHubActionsDeployRole` per workload account for `ssm put-parameter + register-task-definition + pipes update-pipe`. No `update-service`.
+- **SSM params** — `/heediq/transcription/{free,paid}-image-tag` must be seeded once per workload account before first `cdk deploy`. After that, CI owns the value.
 
 ---
 
@@ -67,7 +64,7 @@
 
 - **heediq-shared**: semver publish on `main` merge. Bump `version` before merge. Renovate bumps consuming repos (D-048). Grant new consuming repos read access in GitHub Packages settings (one-time).
 - **heediq-api / heediq-worker-summarization**: esbuild bundle → zip → `aws lambda update-function-code` on develop push. Same artifact promoted to staging → prod.
-- **heediq-worker-transcription**: Docker build → ECR push (sha tag) → ECS update-service on develop push.
+- **heediq-worker-transcription**: Two Docker builds (free/paid) → ECR push (sha-tagged) via `GitHubActionsECRRole` in shared-services → per-env: `ssm put-parameter` + `ecs register-task-definition` + `aws pipes update-pipe` via `GitHubActionsDeployRole` in workload account. No `update-service` (RunTask architecture, D-066).
 - **heediq-web**: Vite build → S3 sync + CloudFront invalidation on develop push.
 - All repos: same branching — feature → PR → develop (auto-deploy dev) → main (staging → manual gate → prod).
 
