@@ -40,6 +40,11 @@ duplicate their content. See `rules/08-memory.md` for the contract.
   - Branch `feature/transcription-worker`. 11 pytest tests + mypy strict. deploy.yml: two SHA-tagged images → shared-services ECR → ssm put-parameter + register-task-definition + pipes update-pipe per env.
   - Transcript written to `heediq-recordings[recordingId].transcript` in DynamoDB (task role has no S3 write grant). Downstream summarization worker reads it by recordingId.
 
+- **heediq-worker-summarization** — Node.js Lambda: reads transcript from DynamoDB, extracts structured fields (requirements/decisions/openQuestions/actionItems) via Claude, writes back to DynamoDB. CI deploys via `lambda update-function-code`.
+  README: `../../heediq-worker-summarization/README.md` · Decisions: D-032, D-038, D-043, D-065
+  - Branch `feature/summarization-worker`. 10 Vitest tests across 4 suites. deploy.yml: test → esbuild bundle → lambda update-function-code per env (dev/staging/prod).
+  - `sourceType='text'` → contentRef IS the recordingId (reads `heediq-recordings[recordingId].transcript`). Not an S3 key.
+
 <!--
 - **<feature/area>** — <one-line summary>.
   README: `path/to/module/README.md` · Decisions: ../business/DECISIONS.md (D-NNN)

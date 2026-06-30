@@ -1,6 +1,6 @@
 # WIP — App repos scaffold (MVP critical path)
 
-**Status:** In progress — all CDK infra deployed to dev. heediq-shared published. heediq-api PR #1 open (+ SQS tier attribute fix committed on feature/api-scaffold). heediq-worker-transcription scaffolded (feature/transcription-worker, PR not yet opened). heediq-infra fix/transcription-task-runtime (D-062/D-066 + SSM image tag promotion) not yet PR'd.
+**Status:** In progress — all CDK infra deployed to dev. heediq-shared published. heediq-api PR #1 open. heediq-worker-transcription PR open (feature/transcription-worker). heediq-infra fix/transcription-task-runtime PR open. heediq-worker-summarization scaffolded (feature/summarization-worker, PR not yet opened). ⬅ NEXT: open PR for summarization-worker, then scaffold heediq-web.
 
 **MVP build order (D-010):** auth/onboarding → home/Listen → recordings library → recording detail/summary
 
@@ -9,9 +9,10 @@
 ## Repo build sequence
 
 1. ~~**heediq-shared**~~ ✅ Published `@heediq/shared@0.1.0` to GitHub Packages. 49 tests.
-2. ~~**heediq-api**~~ ✅ PR #1 open (feature/api-scaffold → develop). 17 tests. deploy.yml added. `^0.1.0` from registry. SQS `tier` message attribute fix included (d65b217). Ready to merge.
-3. ~~**heediq-worker-transcription**~~ ✅ Scaffolded on `feature/transcription-worker`. PR not yet opened. ⬅ JUST COMPLETED
-4. **heediq-worker-summarization** → Node Lambda, Claude API extraction. ⬅ NEXT
+2. ~~**heediq-api**~~ ✅ PR #1 open (feature/api-scaffold → develop). 17 tests. deploy.yml added. `^0.1.0` from registry. SQS `tier` message attribute fix included.
+3. ~~**heediq-worker-transcription**~~ ✅ PR open (feature/transcription-worker). 11 pytest tests + mypy. deploy.yml: ECR push + ssm+task-def+pipes promotion per env.
+4. ~~**heediq-worker-summarization**~~ ✅ Scaffolded, gate green (10 tests). PR not yet opened. ⬅ JUST COMPLETED
+5. **heediq-web** → Vite + React PWA. ⬅ NEXT
 5. **heediq-web** → Vite + React PWA.
 
 ---
