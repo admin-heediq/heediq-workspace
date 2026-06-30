@@ -27,11 +27,12 @@ duplicate their content. See `rules/08-memory.md` for the contract.
 - **heediq-shared** — `@heediq/shared`: Zod schemas + TypeScript types for all cross-repo contracts.
   README: `../../heediq-shared/README.md` · Decisions: D-033, D-040, D-047, D-048
   - Schemas: enums, domain (Org/User/Recording/Job/Summary), API requests, SQS messages (D-023/D-059/D-065), WS push (D-061)
-  - PR #1 open (feature/shared-types-scaffold → develop). 49 tests, typecheck + build clean.
+  - `@heediq/shared@0.1.0` published to GitHub Packages. 49 tests.
+  - Gotcha: new consuming repos need manual read-access grant in GitHub Packages settings (see README).
 
 - **heediq-api** — Hono Lambda: all REST endpoints under `/api/v1/`, JWT auth middleware, D-060 access control.
   README: `../../heediq-api/README.md` · Decisions: D-033, D-034, D-041, D-042, D-060
-  - PR #1 open (feature/api-scaffold → develop). 16 tests, typecheck clean.
+  - PR #1 open (feature/api-scaffold → develop). 16 tests. deploy.yml: esbuild bundle → Lambda update on develop push.
 
 <!--
 - **<feature/area>** — <one-line summary>.
