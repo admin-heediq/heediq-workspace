@@ -24,6 +24,11 @@ duplicate their content. See `rules/08-memory.md` for the contract.
   - **WebStack** — CloudFront + S3 OAC + custom domain + security headers (HSTS/X-Frame/CSP) + SPA 403/404→/index.html + Route53AliasRecord (Z2FDTNDATAQYW2) + 2 SSM params. D-053, D-055. Key gotcha: OAC bucket policy must live in FoundationStack (source-account condition) to avoid circular CDK dependency. PR #25 merged to develop.
   - **SharedServicesStack** — ECR, Route 53, SES+DKIM, cross-account IAM roles (heediq-ses-email-sending, heediq-route53-dns-manager D-064). Deployed.
 
+- **heediq-shared** — `@heediq/shared`: Zod schemas + TypeScript types for all cross-repo contracts.
+  README: `../../heediq-shared/README.md` · Decisions: D-033, D-040, D-047, D-048
+  - Schemas: enums, domain (Org/User/Recording/Job/Summary), API requests, SQS messages (D-023/D-059/D-065), WS push (D-061)
+  - PR #1 open (feature/shared-types-scaffold → develop). 49 tests, typecheck + build clean.
+
 <!--
 - **<feature/area>** — <one-line summary>.
   README: `path/to/module/README.md` · Decisions: ../business/DECISIONS.md (D-NNN)

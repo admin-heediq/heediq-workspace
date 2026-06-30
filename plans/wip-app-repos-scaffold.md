@@ -10,15 +10,15 @@
 
 Repos must be built in this order — each depends on the previous:
 
-1. **heediq-shared** → Zod schemas + TypeScript types (`@heediq/shared`). Everything else imports from here.
-2. **heediq-api** → Hono Lambda: auth middleware (D-041), all REST endpoints, D-060 job enqueue access control.
+1. ~~**heediq-shared**~~ ✅ PR #1 open (feature/shared-types-scaffold → develop). 49 tests, typecheck + build clean.
+2. **heediq-api** → Hono Lambda: auth middleware (D-041), all REST endpoints, D-060 job enqueue access control. ⬅ CURRENT
 3. **heediq-worker-transcription** → faster-whisper container: SIGTERM handler, status stage writes.
 4. **heedpm-worker-summarization** → Claude API extraction Lambda: SQS trigger, structured output.
 5. **heediq-web** → Vite + React PWA: auth flow, home/Listen, recordings library, detail/summary view.
 
 ---
 
-## 1. heediq-shared ⬅ CURRENT
+## 1. heediq-shared ✅ DONE — PR #1 open
 
 **Branch:** `feature/shared-types-scaffold`
 
