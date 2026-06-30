@@ -59,9 +59,14 @@ speaker identification. Same ECS cluster and single g4dn.xlarge Spot ASG (min=0)
 **Zero idle cost:** ASG min=0; instances boot on demand (~45–90s cold start, accepted for async
 batch), terminate after job completes.
 
-**Spot interruption (D-059):** worker catches SIGTERM → writes `status=retrying` to DynamoDB →
-lets SQS visibility timeout expire → job auto-retries. Short runtimes (1–5 min) make retry-from-
-scratch cheap. Capacity-optimized Spot allocation minimises interruption frequency.
+**Spot interruption (D-066, corrects D-059's original mechanism):** worker catches SIGTERM →
+writes `status=retrying` to DynamoDB → explicitly re-sends the original job message to the
+`heediq-transcription` SQS queue (same `tier` attribute, so the EventBridge Pipe re-routes it) →
+exits. Explicit re-enqueue, not SQS visibility timeout expiry — EventBridge Pipes (not the
+worker) is the SQS consumer and deletes the message as soon as it hands the job to ECS `RunTask`,
+before the worker even starts, so no visibility timeout is left to expire by SIGTERM time. Short
+runtimes (1–5 min) make retry-from-scratch cheap. Capacity-optimized Spot allocation minimises
+interruption frequency.
 
 Why the original pivot: at ~10 meetings/day, faster-whisper costs ~$6/mo vs ~$432/mo on AWS
 Transcribe — ~70–75× cheaper. Why the GPU upgrade (D-059): 10× faster, ~50% cheaper per meeting.

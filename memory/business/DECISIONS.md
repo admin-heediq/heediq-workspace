@@ -513,7 +513,7 @@ DNS validation via Route 53 (D-051). No per-subdomain certs unless a specific re
 **Decision:** Both transcription model variants (whisper small and large-v3+pyannote) run on EC2 Spot using g4dn.xlarge (T4, 16 GB VRAM, 4 vCPU, 16 GB RAM, ~$0.13–0.16/hr Spot in eu-west-1). Single instance type, single ASG (min=0, capacity-optimized), single ECS cluster — no separate pools per model. Fargate Spot task definitions and FARGATE_SPOT capacity provider replaced by an EC2 capacity provider backed by an Auto Scaling Group. Zero idle cost preserved (ASG scales to zero when queue empty). Cold start ~45–90s accepted for async batch. Spot interruption: worker catches SIGTERM, writes `status=retrying` to heediq-jobs, lets SQS visibility timeout expire and re-enqueue. AMI: AWS ECS-optimized GPU AMI (Docker + ECS agent + nvidia-container-toolkit pre-configured). g4dn.xlarge is the smallest CUDA GPU instance on AWS — no smaller option exists.
 **Why:** 10× faster transcription (1–2 min whisper small, 3–5 min large-v3 vs 15–20/30–60 min on Fargate CPU). Per-meeting cost drops ~50%+: whisper small ~$0.003, large-v3 ~$0.010 per 60-min meeting (vs ~$0.006/$0.035 on Fargate CPU Spot). Single pool simplifies infra; free/paid job mixing causes no contention at MVP volumes.
 **Supersedes:** D-004 (Fargate Spot → EC2 GPU Spot; self-hosted faster-whisper and SQS unchanged), D-055 (transcription Fargate sizing lines only; Lambda/DynamoDB/CloudFront unchanged)
-**Superseded by:** —
+**Superseded by:** D-066 (retry mechanism only — GPU compute choice, cost numbers, instance type unchanged)
 **Related code:** `heediq-infra/lib/transcription/transcription-stack.ts`, `heediq-infra/lib/config.ts`
 
 ### D-060 · Model access control at API layer, not infra routing (2026-06-23) — Locked
@@ -561,6 +561,14 @@ DNS validation via Route 53 (D-051). No per-subdomain certs unless a specific re
 **Why:** DDB Streams on `heediq-jobs` only works cleanly for the audio path (transcription worker writes the trigger status). Multi-source summarization (text files already in D-026; emails, PDFs, Excel are natural extensions) needs a source-agnostic handoff. SQS gives one typed entry point regardless of how content arrived. Matches D-032's provider-interface design: swappable per source type, not just per model.
 **Supersedes:** —         **Superseded by:** —
 **Related code:** `heediq-infra/lib/summarization/summarization-stack.ts`
+
+### D-066 · Transcription Spot-interruption retry — explicit SQS re-enqueue, not visibility timeout (2026-06-30) — Locked
+**Area:** Architecture / Infra
+**Decision:** On SIGTERM (Spot reclamation), the transcription worker writes `status=retrying` to `heediq-jobs` and explicitly re-sends the original `TranscriptionJobMessage` to the `heediq-transcription` SQS queue (same `tier` message attribute, so the EventBridge Pipe's filter re-routes it to the correct task definition) before exiting. The transcription task role is granted `sqs:SendMessage` on `heediq-transcription` (previously only granted on `heediq-summarization`).
+**Why:** D-059's original retry text ("lets SQS visibility timeout expire and re-enqueue") assumed the worker itself was the SQS consumer. The actual deployed architecture uses EventBridge Pipes as the SQS consumer (D-023) — Pipes deletes the message from the queue as soon as it hands the job to ECS `RunTask`, before the worker container even starts. By the time a worker could catch SIGTERM, there is no visibility timeout left to expire. Explicit re-enqueue is the correct equivalent under the Pipes/RunTask (one-task-per-job) architecture.
+**Supersedes:** D-059 (retry mechanism only — GPU compute choice, cost numbers, instance type, zero-idle-cost ASG design all unchanged)
+**Superseded by:** —
+**Related code:** `heediq-worker-transcription/src/worker.py`, `heediq-infra/lib/transcription/transcription-stack.ts`
 
 ---
 
