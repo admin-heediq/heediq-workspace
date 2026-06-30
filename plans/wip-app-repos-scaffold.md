@@ -156,10 +156,10 @@ POST   /api/v1/upload/presign          ← get S3 presigned PUT URL
 
 These must happen in order before the pipeline works:
 
-1. **Merge heediq-shared PR #1** → develop → then `develop` → `main` PR → merge triggers publish.yml → `@heediq/shared@0.1.0` published to GitHub Packages.
-2. **Update heediq-api** `package.json`: change `"@heediq/shared": "file:../heediq-shared"` → `"^0.1.0"`. Run `pnpm install`. Commit. The current `file:` reference is local-only and breaks CI (GHA runner has no `../heediq-shared`).
-3. **Add `heediq-api` deploy workflow** (`deploy.yml`): on push to `develop` → esbuild bundle → zip → `aws lambda update-function-code`. On push to `main` → staging → manual gate → prod. (See deployment model below.)
-4. **Add `GitHubActionsDeployRole`** to `heediq-infra/scripts/setup.sh` for `heediq-api` repo (narrow trust on `heediq/heediq-api`).
+1. ~~**Widen `GitHubActionsDeployRole` trust**~~ ✅ heediq-infra PR #27 open (chore/widen-deploy-role-trust → develop). After merge: re-run `./scripts/setup.sh` per account.
+2. ~~**Add `heediq-api` deploy workflow**~~ ✅ Added to feature/api-scaffold branch (PR #1). esbuild bundle → zip → Lambda update. Build once, same artifact to dev/staging/prod.
+3. **Merge heediq-shared PR #1** → develop → then `develop` → `main` PR → merge triggers publish.yml → `@heediq/shared@0.1.0` published to GitHub Packages.
+4. **Update heediq-api** `package.json`: change `"@heediq/shared": "file:../heediq-shared"` → `"^0.1.0"`. Run `pnpm install`. Commit. The current `file:` reference is local-only and breaks CI.
 
 ## Deployment model (reference — all app repos)
 
