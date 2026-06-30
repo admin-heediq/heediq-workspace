@@ -11,9 +11,9 @@
 Repos must be built in this order — each depends on the previous:
 
 1. ~~**heediq-shared**~~ ✅ PR #1 open (feature/shared-types-scaffold → develop). 49 tests, typecheck + build clean.
-2. **heediq-api** → Hono Lambda: auth middleware (D-041), all REST endpoints, D-060 job enqueue access control. ⬅ CURRENT
-3. **heediq-worker-transcription** → faster-whisper container: SIGTERM handler, status stage writes.
-4. **heedpm-worker-summarization** → Claude API extraction Lambda: SQS trigger, structured output.
+2. ~~**heediq-api**~~ ✅ PR #1 open (feature/api-scaffold → develop). 16 tests, typecheck clean.
+3. **heediq-worker-transcription** → faster-whisper container: SIGTERM handler, status stage writes. ⬅ CURRENT
+4. **heediq-worker-summarization** → Claude API extraction Lambda: SQS trigger, structured output.
 5. **heediq-web** → Vite + React PWA: auth flow, home/Listen, recordings library, detail/summary view.
 
 ---
@@ -151,6 +151,44 @@ POST   /api/v1/upload/presign          ← get S3 presigned PUT URL
 4. **Recording detail** — transcript, summary tabs (requirements/decisions/open questions/action items), real-time job status via WebSocket (D-061)
 
 ---
+
+## Unblocking steps before workers can run end-to-end
+
+These must happen in order before the pipeline works:
+
+1. **Merge heediq-shared PR #1** → develop → then `develop` → `main` PR → merge triggers publish.yml → `@heediq/shared@0.1.0` published to GitHub Packages.
+2. **Update heediq-api** `package.json`: change `"@heediq/shared": "file:../heediq-shared"` → `"^0.1.0"`. Run `pnpm install`. Commit. The current `file:` reference is local-only and breaks CI (GHA runner has no `../heediq-shared`).
+3. **Add `heediq-api` deploy workflow** (`deploy.yml`): on push to `develop` → esbuild bundle → zip → `aws lambda update-function-code`. On push to `main` → staging → manual gate → prod. (See deployment model below.)
+4. **Add `GitHubActionsDeployRole`** to `heediq-infra/scripts/setup.sh` for `heediq-api` repo (narrow trust on `heediq/heediq-api`).
+
+## Deployment model (reference — all app repos)
+
+**heediq-shared** — published npm package, not a deployed service.
+- `feature` → PR → `develop` (CI: typecheck + test)
+- `develop` → `main` PR → merge → `publish.yml` → `@heediq/shared@0.1.0` on GitHub Packages
+- Bump `version` in `package.json` before merging to `main`. Renovate opens bump PRs in consuming repos (D-048).
+
+**heediq-api** — Lambda code, deployed separately from infra shell.
+- `feature` → PR → `develop` (CI: typecheck + test — same as all repos)
+- Merge to `develop` → `deploy.yml`: esbuild bundle (single `.cjs` file, `--external:@aws-sdk/*`) → zip → `aws lambda update-function-code --function-name heediq-api`
+- `develop` → `main` → staging deploy → manual gate → prod deploy
+- Lambda shell (name, memory, env vars, IAM) is owned by `heediq-infra` ApiStack. App CI only updates the code.
+
+**heediq-worker-transcription / heediq-worker-summarization** — container / Lambda code.
+- Transcription worker (Python ECS): feature → PR → develop → `deploy.yml`: `docker build` → push to ECR (sha-<7chars> tag) → ECS update-service with new task def (D-047)
+- Summarization worker (Node Lambda): same esbuild bundle pattern as heediq-api → `aws lambda update-function-code --function-name heediq-summarization`
+
+**heediq-web** — CloudFront/S3 SPA.
+- Merge to develop → `deploy.yml`: `pnpm run build` (Vite) → `aws s3 sync dist/ s3://heediq-web-assets-{accountId}/` → `aws cloudfront create-invalidation` (distribution ID from SSM `/heediq/web/cloudfront-distribution-id`)
+
+**Versioning (D-047):**
+- `@heediq/shared`: semver (0.1.0 → …). Bump minor for breaking changes. Consuming repos pin version; Renovate opens bumps (D-048).
+- All services: git SHA as version identifier. No semver. Each repo deploys its own code artifact independently.
+
+**Branching — same rules for all repos (D-027):**
+- `develop` is integration branch. All features branch from it, merge back via PR.
+- Merge to `develop` → auto-deploy to dev.
+- `develop` → `main` PR → merge → staging → manual gate → prod.
 
 ## Standing notes (carry forward)
 - `heediq-infra/scripts/setup.sh` needs narrow `GitHubActionsDeployRole` for each app repo — add as each repo gets its first CI workflow.

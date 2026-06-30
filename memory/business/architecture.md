@@ -4,7 +4,7 @@
 detail.
 
 ## Stack
-Full AWS serverless: Lambda, API Gateway, Fargate Spot (ECS), DynamoDB, S3, SQS, EventBridge,
+Full AWS serverless: Lambda, API Gateway, EC2 GPU Spot/ECS (D-059), DynamoDB, S3, SQS, EventBridge,
 Cognito, CloudFront, Route 53, Secrets Manager, CloudWatch.
 - IaC: AWS CDK
 - CI/CD: GitHub Actions
