@@ -53,6 +53,14 @@ The detailed rules live in the imported modules below. Read the relevant module 
 
 ---
 
+## Session start — mandatory reads (every session, before anything else)
+
+1. Read this file (already done if you see this).
+2. **Read every `plans/wip-*.md` file** — these define the active in-flight work and exactly where to resume. If a WIP file exists, open with: *"Found open branch `<branch>` — continuing: `<summary>`. Still what we're doing?"*
+3. Run the coherence check from `rules/08-memory.md`.
+
+---
+
 ## Four things that are always true
 
 1. **Decisions are locked before they are built, and captured the moment they're locked.** Andrii
