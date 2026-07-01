@@ -571,6 +571,13 @@ DNS validation via Route 53 (D-051). No per-subdomain certs unless a specific re
 **Superseded by:** —
 **Related code:** `heediq-worker-transcription/src/worker.py`, `heediq-infra/lib/transcription/transcription-stack.ts`
 
+### D-067 · Summarization model selection by tier — Haiku (free) / Sonnet (paid) (2026-07-01) — Locked
+**Area:** Cost / Architecture
+**Decision:** The summarization worker selects the Claude model based on the org's `tier` field carried in the `SummarizationJobMessage`: `free → claude-haiku-4-5-20251001`, `paid → claude-sonnet-4-6`. `tier` is added to `SummarizationJobMessageSchema` in `@heediq/shared` (mirroring `TranscriptionJobMessage`). The transcription worker passes `job.tier` when enqueuing the summarization message. Model is passed to `ClaudeProvider` at instantiation rather than hardcoded.
+**Why:** Mirrors the transcription tier model pattern (D-059: small/large-v3). Haiku is dramatically cheaper for free-tier jobs (~10–20× vs Sonnet); Sonnet provides higher extraction quality for paid users. Provider interface (D-032) already supports swapping the model without rewriting the worker.
+**Supersedes:** —         **Superseded by:** —
+**Related code:** `heediq-shared/src/messages.ts`, `heediq-worker-summarization/src/provider.ts`, `heediq-worker-transcription/src/models.py`
+
 ---
 
 ## Open / proposed (not yet locked)
