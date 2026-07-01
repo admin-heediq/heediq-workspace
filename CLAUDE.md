@@ -28,6 +28,7 @@ claude-workspace/
     07-engineering-standards.md ← types, security/privacy, errors, cost, a11y, perf, naming
     08-memory.md                ← what Claude reads/writes across tasks
     09-decisions.md             ← auto-capture of locked decisions into business memory
+    10-consistency-check.md     ← periodic cross-repo README/code/memory consistency check
   memory/
     business/                   ← BUSINESS memory: what we decided & why
       DECISIONS.md              ← canonical decisions log (source of truth)
@@ -50,6 +51,7 @@ The detailed rules live in the imported modules below. Read the relevant module 
 @rules/07-engineering-standards.md
 @rules/08-memory.md
 @rules/09-decisions.md
+@rules/10-consistency-check.md
 
 ---
 

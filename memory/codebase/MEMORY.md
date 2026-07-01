@@ -14,7 +14,7 @@ duplicate their content. See `rules/08-memory.md` for the contract.
 ## Modules / Features (pointers)
 
 - **heediq-infra** — CDK TypeScript project; all stacks for all accounts.
-  README: `../../heediq-infra/README.md` · Decisions: D-036, D-037, D-038, D-044, D-045, D-051–D-064
+  README: `../../heediq-infra/README.md` · Decisions: D-036, D-037, D-038, D-044, D-045, D-051–D-067
   - **TranscriptionStack** — EC2 GPU Spot (g4dn.xlarge, D-059); ASG min=0; two Ec2TaskDefs (free/paid, D-060); models baked in image (D-062). Deployed to dev.
   - **FoundationStack** — 5 tables (recordings, orgs, users, jobs w/ DDB Streams NEW_IMAGE, ws-connections w/ TTL + by-recording GSI); ACM wildcard cert eu-west-1 (D-063); 14 SSM params. Deployed to dev.
   - **WebSocketStack** — WebSocket API + heediq-ws-connect + heediq-ws-status-pusher (DDB Streams trigger) + custom domain ws-{env}.heediq.com + Route53AliasRecord (D-064) + 2 SSM params (D-061). Deployed to dev.
@@ -41,7 +41,7 @@ duplicate their content. See `rules/08-memory.md` for the contract.
   - Transcript written to `heediq-recordings[recordingId].transcript` in DynamoDB (task role has no S3 write grant). Downstream summarization worker reads it by recordingId.
 
 - **heediq-worker-summarization** — Node.js Lambda: reads transcript from DynamoDB, extracts structured fields (requirements/decisions/openQuestions/actionItems) via Claude, writes back to DynamoDB. CI deploys via `lambda update-function-code`.
-  README: `../../heediq-worker-summarization/README.md` · Decisions: D-032, D-038, D-043, D-065
+  README: `../../heediq-worker-summarization/README.md` · Decisions: D-032, D-038, D-043, D-065, D-067
   - Branch `feature/summarization-worker`. 10 Vitest tests across 4 suites. deploy.yml: test → esbuild bundle → lambda update-function-code per env (dev/staging/prod).
   - `sourceType='text'` → contentRef IS the recordingId (reads `heediq-recordings[recordingId].transcript`). Not an S3 key.
 
